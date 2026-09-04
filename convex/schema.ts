@@ -9,4 +9,15 @@ export default defineSchema({
   numbers: defineTable({
     value: v.number(),
   }),
+  linkedServices: defineTable({
+    userTokenIdentifier: v.string(),
+    service: v.union(
+      v.literal("instagram"),
+      v.literal("twitter"),
+      v.literal("facebook"),
+      v.literal("custom"),
+      v.literal("linkedin"),
+    ),
+    firecrawlSessionID: v.string(),
+  }),
 });
