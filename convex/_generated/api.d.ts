@@ -8,7 +8,10 @@
  * @module
  */
 
-import type * as myFunctions from "../myFunctions.js";
+import type * as login from "../login.js";
+import type * as login_node from "../login/node.js";
+import type * as utilities_auth from "../utilities/auth.js";
+import type * as utilities_sites from "../utilities/sites.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +20,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  myFunctions: typeof myFunctions;
+  login: typeof login;
+  "login/node": typeof login_node;
+  "utilities/auth": typeof utilities_auth;
+  "utilities/sites": typeof utilities_sites;
 }>;
 
 /**
