@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** none
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-10T01:49:03Z
+- **Last updated:** 2026-09-10T02:18:13Z
 
 ## Log
 
@@ -40,3 +40,9 @@ Migrated authentication to Convex Auth v2 alpha with email/password and GitHub
 OAuth. Registered the core, password, username, and OAuth components; added app
 user records and reusable sign-in UI (`convex/auth.ts`, `convex/users.ts`,
 `convex/convex.config.ts`, `src/auth/AuthForm.tsx`).
+
+### 2026-09-10 - aaf9896
+
+Fixed restarted service logins so they close the old Firecrawl browser and
+delete its stale Convex session record before creating a replacement
+(`convex/login.ts`, `convex/login/node.ts`).
