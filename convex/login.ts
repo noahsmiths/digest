@@ -47,6 +47,22 @@ export const findExistingLoginSession = internalQuery({
   },
 });
 
+export const findLinkedService = internalQuery({
+  args: {
+    userTokenIdentifier: v.string(),
+    service: serviceValidator,
+  },
+  returns: v.union(schema.doc('linkedServices'), v.null()),
+  handler: async (ctx, { service, userTokenIdentifier }) => {
+    return await ctx.db
+      .query('linkedServices')
+      .withIndex('by_userTokenIdentifier_and_service', (q) =>
+        q.eq('userTokenIdentifier', userTokenIdentifier).eq('service', service),
+      )
+      .first();
+  },
+});
+
 export const completeLogin = internalMutation({
   args: {
     serviceLoginSessionsDocumentID: v.id('serviceLoginSessions'),
@@ -69,6 +85,17 @@ export const deleteExistingSession = internalMutation({
   returns: v.null(),
   handler: async (ctx, { serviceLoginSessionsDocumentID }) => {
     await ctx.db.delete('serviceLoginSessions', serviceLoginSessionsDocumentID);
+    return null;
+  },
+});
+
+export const deleteLinkedService = internalMutation({
+  args: {
+    linkedServiceDocumentID: v.id('linkedServices'),
+  },
+  returns: v.null(),
+  handler: async (ctx, { linkedServiceDocumentID }) => {
+    await ctx.db.delete('linkedServices', linkedServiceDocumentID);
     return null;
   },
 });

@@ -10,6 +10,17 @@ const serviceLoginURLs: Record<Service, string> = {
   linkedin: 'https://www.linkedin.com/login',
 };
 
+const serviceLogoutURLs: Record<Service, string> = {
+  instagram: 'https://www.instagram.com/accounts/logout/',
+  x: 'https://x.com/logout',
+  facebook: 'https://www.facebook.com/logout.php',
+  linkedin: 'https://www.linkedin.com/m/logout/',
+};
+
 export function serviceToLoginURL(service: Service) {
   return serviceLoginURLs[service];
+}
+
+export function serviceToLogoutURL(service: Service) {
+  return serviceLogoutURLs[service];
 }

@@ -38,12 +38,14 @@ export default function App() {
 function Content() {
   const linkedServices = useQuery(api.login.listLinkedServices);
   const [loggingInService, setLoggingInService] = useState<Service | null>(null);
+  const [disconnectingService, setDisconnectingService] = useState<Service | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [firecrawlLiveViewURL, setFirecrawlLiveViewURL] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loginToService = useAction(api.login.node.startLoginSession);
   const completeLogin = useAction(api.login.node.completeLoginSession);
+  const disconnectService = useAction(api.login.node.disconnectService);
 
   const startLogin = async (service: Service) => {
     setLoggingInService(service);
@@ -81,6 +83,20 @@ function Content() {
     }
   };
 
+  const disconnectFromService = async (service: Service) => {
+    setDisconnectingService(service);
+    setError(null);
+
+    try {
+      await disconnectService({ service });
+    } catch (cause) {
+      console.error(`Failed to disconnect ${service}:`, cause);
+      setError('Unable to disconnect the service. Please try again.');
+    } finally {
+      setDisconnectingService(null);
+    }
+  };
+
   return (
     <section className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div>
@@ -92,6 +108,7 @@ function Content() {
         {services.map((service) => {
           const isConnected = linkedServices?.includes(service.id) ?? false;
           const isStarting = loggingInService === service.id;
+          const isDisconnecting = disconnectingService === service.id;
 
           return (
             <li className="flex items-center justify-between gap-4 p-4" key={service.id}>
@@ -103,11 +120,15 @@ function Content() {
                 className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-slate-700"
                 type="button"
                 disabled={
-                  linkedServices === undefined || loggingInService !== null || activeService !== null || isSaving
+                  linkedServices === undefined ||
+                  loggingInService !== null ||
+                  disconnectingService !== null ||
+                  activeService !== null ||
+                  isSaving
                 }
-                onClick={isConnected ? undefined : () => void startLogin(service.id)}
+                onClick={isConnected ? () => void disconnectFromService(service.id) : () => void startLogin(service.id)}
               >
-                {isConnected ? 'Disconnect' : isStarting ? 'Opening…' : 'Log in'}
+                {isConnected ? (isDisconnecting ? 'Disconnecting…' : 'Disconnect') : isStarting ? 'Opening…' : 'Log in'}
               </button>
             </li>
           );

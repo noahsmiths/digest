@@ -4,7 +4,7 @@ import { v } from 'convex/values';
 import { action, env } from '../_generated/server';
 import { getIdentityOrThrow } from '../utilities/auth';
 import Firecrawl from 'firecrawl';
-import { serviceToLoginURL } from '../utilities/sites';
+import { serviceToLoginURL, serviceToLogoutURL } from '../utilities/sites';
 import { internal } from '../_generated/api';
 import { serviceValidator } from '../schema';
 
@@ -85,6 +85,58 @@ export const completeLoginSession = action({
       userTokenIdentifier: identity.tokenIdentifier,
       service: service,
       firecrawlProfileName: existingLoginSession.firecrawlProfileName,
+    });
+    return null;
+  },
+});
+
+export const disconnectService = action({
+  args: {
+    service: serviceValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, { service }) => {
+    const identity = await getIdentityOrThrow(ctx);
+    const linkedService = await ctx.runQuery(internal.login.findLinkedService, {
+      userTokenIdentifier: identity.tokenIdentifier,
+      service,
+    });
+
+    if (!linkedService) {
+      return null;
+    }
+
+    const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
+    const session = await firecrawl.browser({
+      ttl: 120,
+      activityTtl: 60,
+      profile: { name: linkedService.firecrawlProfileName, saveChanges: true },
+    });
+
+    if (!session.id) {
+      throw new Error(`Firecrawl session ID missing: ${session.error ?? 'unknown error'}`);
+    }
+
+    const logoutResult = await firecrawl.browserExecute(session.id, {
+      code: `await page.goto("${serviceToLogoutURL(service)}", { waitUntil: "domcontentloaded" });`,
+      language: 'node',
+      timeout: 60,
+    });
+
+    if (!logoutResult.success || (logoutResult.exitCode !== undefined && logoutResult.exitCode !== 0)) {
+      await firecrawl.deleteBrowser(session.id);
+      throw new Error(
+        `Failed to log out of ${service}: ${logoutResult.error ?? logoutResult.stderr ?? 'unknown error'}`,
+      );
+    }
+
+    const deleteResult = await firecrawl.deleteBrowser(session.id);
+    if (!deleteResult.success) {
+      throw new Error(`Failed to close ${service} logout session: ${deleteResult.error ?? 'unknown error'}`);
+    }
+
+    await ctx.runMutation(internal.login.deleteLinkedService, {
+      linkedServiceDocumentID: linkedService._id,
     });
     return null;
   },
