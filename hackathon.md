@@ -2,22 +2,41 @@
 
 - **Project:** digest
 - **Event:** Convex All Gas Hackathon
-- **What it does:** A Convex + React app that authenticates with Convex Auth v2 and stores connected service sessions.
+- **What it does:** A Convex + React app that authenticates users and connects their social accounts through saved browser sessions.
 - **Live app:** not deployed
-- **Repo:** none
-- **Frontend:** Convex static hosting
+- **Repo:** https://github.com/noahsmiths/digest
+- **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** none
-- **Convex features:** schema, tables, queries, mutations, actions, realtime queries
-- **Auth:** Convex Auth v2
+- **Components:** @convex-dev/auth (core, password, username, OAuth)
+- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries
+- **Auth:** Convex Auth
 - **AI models:** none
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-02T09:44:09Z
+- **Last updated:** 2026-09-10T01:49:03Z
 
 ## Log
 
 ### 2026-09-02 - 5caf6d8
 
-Initialized the Convex + React starter. It authenticates with Convex Auth v2
-and reads and adds persisted numbers using a Convex schema, query, mutation,
-action, and realtime client hooks.
+Initialized the authenticated Convex + React starter with a persisted,
+realtime number list backed by a schema, query, mutation, and action
+(`convex/schema.ts`, `convex/myFunctions.ts`, `src/App.tsx`).
+
+### 2026-09-04 - 3b7e3a9
+
+Added the first linked-services table, keyed by authenticated user and service,
+to prepare for storing connected accounts (`convex/schema.ts`).
+
+### 2026-09-09 - 17fb6e5
+
+Replaced the starter number demo with an Instagram connection flow using
+authenticated Firecrawl browser sessions. Added actions plus indexed internal
+queries and mutations to manage in-progress sessions and persist completed
+connections (`convex/login.ts`, `convex/login/node.ts`, `convex/schema.ts`).
+
+### 2026-09-10 - 5583882
+
+Migrated authentication to Convex Auth v2 alpha with email/password and GitHub
+OAuth. Registered the core, password, username, and OAuth components; added app
+user records and reusable sign-in UI (`convex/auth.ts`, `convex/users.ts`,
+`convex/convex.config.ts`, `src/auth/AuthForm.tsx`).
