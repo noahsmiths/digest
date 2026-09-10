@@ -41,4 +41,13 @@ export const completeLogin = internalMutation({
         await ctx.db.delete("serviceLoginSessions", serviceLoginSessionsDocumentID);
         await ctx.db.insert("linkedServices", { userTokenIdentifier, service, firecrawlProfileName });
     }
+});
+
+export const deleteExistingSession = internalMutation({
+    args: {
+        serviceLoginSessionsDocumentID: v.id("serviceLoginSessions"),
+    },
+    handler: async (ctx, { serviceLoginSessionsDocumentID }) => {
+        await ctx.db.delete("serviceLoginSessions", serviceLoginSessionsDocumentID);
+    }
 })

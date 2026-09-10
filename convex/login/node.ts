@@ -18,6 +18,7 @@ export const startLoginSession = action({
         const existingLoginSession = await ctx.runQuery(internal.login.findExistingLoginSession, { userTokenIdentifier: identity.tokenIdentifier, service })
         if (existingLoginSession) {
             await firecrawl.deleteBrowser(existingLoginSession.firecrawlSessionID);
+            await ctx.runMutation(internal.login.deleteExistingSession, { serviceLoginSessionsDocumentID: existingLoginSession._id });
         }
 
         const profileName = crypto.randomUUID();
