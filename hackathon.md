@@ -7,12 +7,12 @@
 - **Repo:** https://github.com/noahsmiths/digest
 - **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** @convex-dev/auth (core, password, username, OAuth)
+- **Components:** @convex-dev/auth (core, password, username, OAuth). Firecrawl uses its Node SDK directly because the current Firecrawl Convex component does not support all required API endpoints.
 - **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries
 - **Auth:** Convex Auth
 - **AI models:** none
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-10T02:18:13Z
+- **Last updated:** 2026-09-10T20:59:03Z
 
 ## Log
 
@@ -46,3 +46,17 @@ user records and reusable sign-in UI (`convex/auth.ts`, `convex/users.ts`,
 Fixed restarted service logins so they close the old Firecrawl browser and
 delete its stale Convex session record before creating a replacement
 (`convex/login.ts`, `convex/login/node.ts`).
+
+### 2026-09-10 - b4ea6a1
+
+Expanded linked account support to Instagram, X, Facebook, and LinkedIn. The
+authenticated UI now lists every service with realtime connection state and
+launches the selected provider's Firecrawl login flow (`src/App.tsx`,
+`convex/login.ts`, `convex/login/node.ts`, `convex/utilities/sites.ts`).
+
+### 2026-09-10 - c37e0f4
+
+Added noninteractive disconnect flows that reopen each saved Firecrawl profile,
+navigate to the provider's logout endpoint, and remove the linked-service row
+after logout completes so the UI updates in realtime (`convex/login.ts`,
+`convex/login/node.ts`, `src/App.tsx`).
