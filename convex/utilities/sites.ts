@@ -1,15 +1,15 @@
-import { Doc } from "../_generated/dataModel";
+import type { Infer } from 'convex/values';
+import { serviceValidator } from '../schema';
 
-// Below not used yet...
-// export const ServiceToLoginURL: Record<Doc<"linkedServices">["service"], string> = {
-//     "instagram": "https://www.instagram.com/accounts/login/",
-// };
+export type Service = Infer<typeof serviceValidator>;
 
-export function serviceToLoginURL(service: Doc<"linkedServices">["service"]) {
-    switch (service) {
-        case "instagram":
-            return "https://www.instagram.com/accounts/login/"
-        default:
-            throw new Error(`Not implemented for ${service} yet`);
-    }
+const serviceLoginURLs: Record<Service, string> = {
+  instagram: 'https://www.instagram.com/accounts/login/',
+  x: 'https://x.com/i/flow/login',
+  facebook: 'https://www.facebook.com/login/',
+  linkedin: 'https://www.linkedin.com/login',
+};
+
+export function serviceToLoginURL(service: Service) {
+  return serviceLoginURLs[service];
 }

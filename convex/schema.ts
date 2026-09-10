@@ -1,10 +1,12 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-// The schema is entirely optional.
-// You can delete this file (schema.ts) and the
-// app will continue to work.
-// The schema provides more precise TypeScript types.
+export const serviceValidator = v.union(
+  v.literal('instagram'),
+  v.literal('x'),
+  v.literal('facebook'),
+  v.literal('linkedin'),
+);
 
 export default defineSchema({
   users: defineTable({
@@ -14,12 +16,12 @@ export default defineSchema({
   }),
   linkedServices: defineTable({
     userTokenIdentifier: v.string(),
-    service: v.string(),
+    service: serviceValidator,
     firecrawlProfileName: v.string(),
-  }),
+  }).index('by_userTokenIdentifier_and_service', ['userTokenIdentifier', 'service']),
   serviceLoginSessions: defineTable({
     userTokenIdentifier: v.string(),
-    service: v.string(),
+    service: serviceValidator,
     firecrawlProfileName: v.string(),
     firecrawlLiveViewURL: v.string(),
     firecrawlSessionID: v.string(),
