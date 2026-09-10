@@ -11,3 +11,5 @@ Convex agent skills for common tasks can be installed by running
 `npx convex ai-files install`.
 
 <!-- convex-ai-end -->
+
+The current version of convex used is v2 which is in alpha and has separate documentation, found [here](https://auth-v2.previews.convex.dev/)

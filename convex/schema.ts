@@ -7,6 +7,11 @@ import { v } from 'convex/values';
 // The schema provides more precise TypeScript types.
 
 export default defineSchema({
+  users: defineTable({
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+  }),
   linkedServices: defineTable({
     userTokenIdentifier: v.string(),
     service: v.string(),
@@ -19,6 +24,6 @@ export default defineSchema({
     firecrawlLiveViewURL: v.string(),
     firecrawlSessionID: v.string(),
   })
-    .index("by_userTokenIdentifier_and_service", ["userTokenIdentifier", "service"])
-    .index("by_firecrawlProfileName", ["firecrawlProfileName"]),
+    .index('by_userTokenIdentifier_and_service', ['userTokenIdentifier', 'service'])
+    .index('by_firecrawlProfileName', ['firecrawlProfileName']),
 });

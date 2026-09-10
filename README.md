@@ -1,4 +1,4 @@
-# Welcome to your Convex + React (Vite) + WorkOS AuthKit app
+# Digest
 
 This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
 
@@ -8,7 +8,7 @@ After the initial setup (<2 minutes) you'll have a working full-stack app using:
 - [React](https://react.dev/) as your frontend (web page interactivity)
 - [Vite](https://vitest.dev/) for optimized web hosting
 - [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
-- [WorkOS AuthKit](https://workos.com/docs/authkit) for authentication
+- [Convex Auth v2](https://auth-v2.previews.convex.dev/) for email/password and GitHub authentication
 
 ## Get started
 
@@ -19,22 +19,11 @@ npm install
 npm run dev
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
+Copy `.env.local.example` to `.env.local` and set `VITE_CONVEX_URL` to your Convex deployment URL.
 
-```
-npm create convex@latest -- -t react-vite-workos-authkit
-```
-
-Then:
-
-1. Sign up for [WorkOS](https://workos.com/) and create an application
-2. Copy `.env.local.example` to `.env.local` and configure:
-   - `VITE_WORKOS_CLIENT_ID`: Your WorkOS client ID
-   - `VITE_WORKOS_REDIRECT_URI`: Your redirect URI (default: http://localhost:5173/callback)
-   - `VITE_CONVEX_URL`: Your Convex deployment URL
-3. Configure your WorkOS client ID as `WORKOS_CLIENT_ID` in your Convex dashboard environment variables
-
-For user management and webhook integration with WorkOS, check out the [WorkOS documentation](https://workos.com/docs/user-management).
+GitHub sign-in additionally requires a GitHub OAuth app whose callback URL is
+`<CONVEX_SITE_URL>/oauth/github/callback`, plus `AUTH_GITHUB_CLIENT_ID` and
+`AUTH_GITHUB_CLIENT_SECRET` in the Convex deployment environment.
 
 ## Learn more
 

@@ -4,7 +4,6 @@ import { v } from "convex/values";
 import { action, env } from "../_generated/server";
 import { getIdentityOrThrow } from "../utilities/auth";
 import Firecrawl from "firecrawl";
-import { randomUUID } from "crypto";
 import { serviceToLoginURL } from "../utilities/sites";
 import { internal } from "../_generated/api";
 
@@ -21,7 +20,7 @@ export const startLoginSession = action({
             await firecrawl.deleteBrowser(existingLoginSession.firecrawlSessionID);
         }
 
-        const profileName = randomUUID();
+        const profileName = crypto.randomUUID();
         const TTL = 300;
         const session = await firecrawl.browser({ ttl: TTL, activityTtl: 120, streamWebView: true, profile: { name: profileName, saveChanges: true }});
 
