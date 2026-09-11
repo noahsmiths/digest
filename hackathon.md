@@ -49,7 +49,7 @@ delete its stale Convex session record before creating a replacement
 
 ### 2026-09-10 - b4ea6a1
 
-Expanded linked account support to Instagram, X, Facebook, and LinkedIn. The
+Expanded linked account support to Instagram, X, and LinkedIn. The
 authenticated UI now lists every service with realtime connection state and
 launches the selected provider's Firecrawl login flow (`src/App.tsx`,
 `convex/login.ts`, `convex/login/node.ts`, `convex/utilities/sites.ts`).
