@@ -6,7 +6,6 @@ import { AuthButton } from './auth/AuthForm';
 const services = [
   { id: 'instagram', name: 'Instagram' },
   { id: 'x', name: 'X' },
-  { id: 'facebook', name: 'Facebook' },
   { id: 'linkedin', name: 'LinkedIn' },
 ] as const;
 

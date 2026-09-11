@@ -4,7 +4,6 @@ import { v } from 'convex/values';
 export const serviceValidator = v.union(
   v.literal('instagram'),
   v.literal('x'),
-  v.literal('facebook'),
   v.literal('linkedin'),
 );
 

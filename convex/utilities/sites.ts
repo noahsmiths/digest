@@ -6,14 +6,12 @@ export type Service = Infer<typeof serviceValidator>;
 const serviceLoginURLs: Record<Service, string> = {
   instagram: 'https://www.instagram.com/accounts/login/',
   x: 'https://x.com/i/flow/login',
-  facebook: 'https://www.facebook.com/login/',
   linkedin: 'https://www.linkedin.com/login',
 };
 
 const serviceLogoutURLs: Record<Service, string> = {
   instagram: 'https://www.instagram.com/accounts/logout/',
   x: 'https://x.com/logout',
-  facebook: 'https://www.facebook.com/logout.php',
   linkedin: 'https://www.linkedin.com/m/logout/',
 };
 
