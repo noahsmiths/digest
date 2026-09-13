@@ -2,17 +2,17 @@
 
 - **Project:** digest
 - **Event:** Convex All Gas Hackathon
-- **What it does:** A Convex + React app that authenticates users, connects Instagram, X, and LinkedIn accounts, and scrapes their following or recent feeds into a shared post shape with persisted images.
+- **What it does:** An authenticated Convex + React app that turns Instagram, X, and LinkedIn feeds into durable, categorized digests while preserving the original post content and images.
 - **Live app:** not deployed
 - **Repo:** https://github.com/noahsmiths/digest
 - **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** @convex-dev/auth (core, password, username, OAuth)
-- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, file storage
+- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features
+- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, paginated queries, file storage, durable workflows
 - **Auth:** Convex Auth
-- **AI models:** none
+- **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-13T04:01:34Z
+- **Last updated:** 2026-09-13T05:33:11Z
 
 ## Log
 
@@ -67,3 +67,14 @@ Added authenticated feed scraping for Instagram Following, X Following, and
 LinkedIn Recent. Each Convex action normalizes author, body, and images while
 persisting scraped media in Convex file storage; the temporary frontend exposes
 the results for manual inspection (`convex/scraping`, `src/App.tsx`).
+
+### 2026-09-13 - 4f79e01
+
+Built authenticated, durable digest generation that sequentially scrapes up to
+50 posts per connected service, retries idempotent steps, and classifies saved
+posts in concurrent multimodal GPT-5 batches. Added partial-result fallbacks,
+persisted paginated history, reactive progress, and category-grouped detail
+views; registered the Agent and Workflow components (`convex/digest`,
+`convex/digests.ts`, `convex/schema.ts`, `convex/convex.config.ts`, `src/App.tsx`).
+Firecrawl remains a direct SDK integration because its Convex component does not
+cover the Browser API features this app needs (`convex/scraping/shared.ts`).
