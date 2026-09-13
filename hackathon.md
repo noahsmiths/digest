@@ -2,17 +2,17 @@
 
 - **Project:** digest
 - **Event:** Convex All Gas Hackathon
-- **What it does:** A Convex + React app that authenticates users and connects their social accounts through saved browser sessions.
+- **What it does:** A Convex + React app that authenticates users, connects Instagram, X, and LinkedIn accounts, and scrapes their following or recent feeds into a shared post shape with persisted images.
 - **Live app:** not deployed
 - **Repo:** https://github.com/noahsmiths/digest
 - **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** @convex-dev/auth (core, password, username, OAuth). Firecrawl uses its Node SDK directly because the current Firecrawl Convex component does not support all required API endpoints.
-- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries
+- **Components:** @convex-dev/auth (core, password, username, OAuth)
+- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, file storage
 - **Auth:** Convex Auth
 - **AI models:** none
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-10T20:59:03Z
+- **Last updated:** 2026-09-13T04:01:34Z
 
 ## Log
 
@@ -60,3 +60,10 @@ Added noninteractive disconnect flows that reopen each saved Firecrawl profile,
 navigate to the provider's logout endpoint, and remove the linked-service row
 after logout completes so the UI updates in realtime (`convex/login.ts`,
 `convex/login/node.ts`, `src/App.tsx`).
+
+### 2026-09-13 - 9c9b1f8
+
+Added authenticated feed scraping for Instagram Following, X Following, and
+LinkedIn Recent. Each Convex action normalizes author, body, and images while
+persisting scraped media in Convex file storage; the temporary frontend exposes
+the results for manual inspection (`convex/scraping`, `src/App.tsx`).
