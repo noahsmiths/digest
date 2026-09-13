@@ -63,6 +63,7 @@ async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts
 
   return posts
     .map((post) => ({
+      sourcePostId: post.id,
       author: post.author,
       body: post.body,
       images: post.imageUrls
@@ -108,8 +109,19 @@ export async function runServiceScraper(
     throw new Error('AUTH_REQUIRED');
   }
 
+  return await runServiceScraperWithProfile(ctx, linkedService.firecrawlProfileName, maxPosts, scrape);
+}
+
+export async function runServiceScraperWithProfile(
+  ctx: ActionCtx,
+  firecrawlProfileName: string,
+  maxPosts: number,
+  scrape: ServiceScraper,
+): Promise<ScrapedPost[]> {
+  validateMaxPosts(maxPosts);
+
   const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
-  const firecrawlSession = await openBrowserSession(firecrawl, linkedService.firecrawlProfileName);
+  const firecrawlSession = await openBrowserSession(firecrawl, firecrawlProfileName);
   if (!firecrawlSession.id || !firecrawlSession.cdpUrl) {
     throw new Error(`Unable to open Firecrawl browser: ${firecrawlSession.error ?? 'unknown error'}`);
   }

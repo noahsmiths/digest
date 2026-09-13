@@ -4,6 +4,8 @@ import auth from '@convex-dev/auth/core/convex.config.js';
 import passwordProvider from '@convex-dev/auth/providers/password/convex.config.js';
 import oauth from '@convex-dev/auth/providers/oauth/convex.config.js';
 import username from '@convex-dev/auth/username/convex.config.js';
+import agent from '@convex-dev/agent/convex.config.js';
+import workflow from '@convex-dev/workflow/convex.config.js';
 
 const app = defineApp({
   env: {
@@ -33,5 +35,7 @@ app.use(oauth, {
     CLIENT_SECRET: app.env.AUTH_GITHUB_CLIENT_SECRET,
   },
 });
+app.use(agent);
+app.use(workflow);
 
 export default app;

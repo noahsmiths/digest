@@ -9,6 +9,10 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as digest_actions from "../digest/actions.js";
+import type * as digest_classification from "../digest/classification.js";
+import type * as digest_workflow from "../digest/workflow.js";
+import type * as digests from "../digests.js";
 import type * as login from "../login.js";
 import type * as login_node from "../login/node.js";
 import type * as scraping_data from "../scraping/data.js";
@@ -30,6 +34,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  "digest/actions": typeof digest_actions;
+  "digest/classification": typeof digest_classification;
+  "digest/workflow": typeof digest_workflow;
+  digests: typeof digests;
   login: typeof login;
   "login/node": typeof login_node;
   "scraping/data": typeof scraping_data;
@@ -75,4 +83,6 @@ export declare const components: {
   authPasswordProvider: import("@convex-dev/auth/providers/password/_generated/component.js").ComponentApi<"authPasswordProvider">;
   authUsername: import("@convex-dev/auth/username/_generated/component.js").ComponentApi<"authUsername">;
   oauthGithub: import("@convex-dev/auth/providers/oauth/_generated/component.js").ComponentApi<"oauthGithub">;
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
 };

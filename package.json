@@ -13,12 +13,21 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.66",
+    "@ai-sdk/provider": "^4.0.14",
+    "@ai-sdk/provider-utils": "^5.0.40",
+    "@convex-dev/agent": "^0.7.2",
     "@convex-dev/auth": "^2.0.0-alpha.1",
+    "@convex-dev/workflow": "^0.4.7",
+    "@convex-dev/workpool": "^0.4.12",
+    "ai": "^7.0.99",
     "convex": "^1.44.0",
+    "convex-helpers": "^0.1.124",
     "firecrawl": "^4.38.0",
     "playwright-core": "^1.63.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@convex-dev/eslint-plugin": "^4.0.0",

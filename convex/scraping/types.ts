@@ -8,6 +8,7 @@ export const scrapedImageValidator = v.object({
 });
 
 export const scrapedPostValidator = v.object({
+  sourcePostId: v.string(),
   author: v.string(),
   body: v.string(),
   images: v.array(scrapedImageValidator),
@@ -21,6 +22,7 @@ export type RawPost = {
 };
 
 export type ScrapedPost = {
+  sourcePostId: string;
   author: string;
   body: string;
   images: Array<{
