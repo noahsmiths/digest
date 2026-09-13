@@ -11,6 +11,13 @@
 import type * as auth from "../auth.js";
 import type * as login from "../login.js";
 import type * as login_node from "../login/node.js";
+import type * as scraping_data from "../scraping/data.js";
+import type * as scraping_instagram from "../scraping/instagram.js";
+import type * as scraping_linkedin from "../scraping/linkedin.js";
+import type * as scraping_network from "../scraping/network.js";
+import type * as scraping_shared from "../scraping/shared.js";
+import type * as scraping_types from "../scraping/types.js";
+import type * as scraping_x from "../scraping/x.js";
 import type * as users from "../users.js";
 import type * as utilities_auth from "../utilities/auth.js";
 import type * as utilities_sites from "../utilities/sites.js";
@@ -25,6 +32,13 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   login: typeof login;
   "login/node": typeof login_node;
+  "scraping/data": typeof scraping_data;
+  "scraping/instagram": typeof scraping_instagram;
+  "scraping/linkedin": typeof scraping_linkedin;
+  "scraping/network": typeof scraping_network;
+  "scraping/shared": typeof scraping_shared;
+  "scraping/types": typeof scraping_types;
+  "scraping/x": typeof scraping_x;
   users: typeof users;
   "utilities/auth": typeof utilities_auth;
   "utilities/sites": typeof utilities_sites;

@@ -7,6 +7,7 @@ import Firecrawl from 'firecrawl';
 import { serviceToLoginURL, serviceToLogoutURL } from '../utilities/sites';
 import { internal } from '../_generated/api';
 import { serviceValidator } from '../schema';
+import { createHash } from 'node:crypto';
 
 export const startLoginSession = action({
   args: {
@@ -28,7 +29,7 @@ export const startLoginSession = action({
       });
     }
 
-    const profileName = crypto.randomUUID();
+    const profileName = createHash("sha256").update(identity.tokenIdentifier).digest("hex");
     const TTL = 300;
     const session = await firecrawl.browser({
       ttl: TTL,

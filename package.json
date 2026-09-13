@@ -16,6 +16,7 @@
     "@convex-dev/auth": "^2.0.0-alpha.1",
     "convex": "^1.44.0",
     "firecrawl": "^4.38.0",
+    "playwright-core": "^1.63.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
