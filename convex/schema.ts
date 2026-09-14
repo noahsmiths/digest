@@ -7,8 +7,11 @@ export const digestCategoryValidator = v.union(
   v.literal('news'),
   v.literal('social'),
   v.literal('artists'),
+  v.literal('event'),
   v.literal('other'),
 );
+
+export const digestDecisionValidator = v.union(v.literal('social'), v.literal('event'), v.literal('drop'));
 
 export const digestStatusValidator = v.union(
   v.literal('running'),
@@ -68,6 +71,7 @@ export default defineSchema({
     author: v.string(),
     body: v.string(),
     imageStorageIds: v.array(v.id('_storage')),
+    isMutual: v.optional(v.boolean()),
     category: v.optional(digestCategoryValidator),
     classificationSource: v.optional(v.union(v.literal('llm'), v.literal('fallback'))),
   })

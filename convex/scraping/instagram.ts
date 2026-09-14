@@ -43,6 +43,13 @@ function isPromotedMedia(value: unknown): boolean {
   });
 }
 
+function instagramMutual(media: Record<string, unknown>): boolean | undefined {
+  const relationship = object(object(media.user)?.friendship_status);
+  const following = relationship?.following;
+  const followedBy = relationship?.followed_by;
+  return typeof following === 'boolean' && typeof followedBy === 'boolean' ? following && followedBy : undefined;
+}
+
 function normalizeInstagramMedia(media: unknown): RawPost | null {
   const record = object(media);
   if (record === null || isPromotedMedia(record)) {
@@ -65,7 +72,8 @@ function normalizeInstagramMedia(media: unknown): RawPost | null {
       ['caption', 'text'],
       ['edge_media_to_caption', 'edges', '0', 'node', 'text'],
     ]) ?? '';
-  return { id, author, body, imageUrls: instagramImages(record) };
+  const isMutual = instagramMutual(record);
+  return { id, author, body, imageUrls: instagramImages(record), ...(isMutual === undefined ? {} : { isMutual }) };
 }
 
 function parseInstagramResponse(data: unknown): RawPost[] {

@@ -36,6 +36,14 @@ function stringAtObject(value: unknown, key: string) {
   return string(object(value)?.[key]);
 }
 
+function xMutual(tweet: Record<string, unknown>): boolean | undefined {
+  const user = object(path(tweet, ['core', 'user_results', 'result']));
+  const legacyUser = object(user?.legacy);
+  const following = user?.following ?? legacyUser?.following;
+  const followedBy = user?.followed_by ?? legacyUser?.followed_by;
+  return typeof following === 'boolean' && typeof followedBy === 'boolean' ? following && followedBy : undefined;
+}
+
 function normalizeTweet(value: unknown): RawPost | null {
   const tweet = object(unwrapTweet(value));
   if (tweet === null) {
@@ -58,7 +66,8 @@ function normalizeTweet(value: unknown): RawPost | null {
       ['note_tweet', 'note_tweet_results', 'result', 'text'],
       ['legacy', 'full_text'],
     ]) ?? '';
-  return { id, author, body, imageUrls: xImages(tweet) };
+  const isMutual = xMutual(tweet);
+  return { id, author, body, imageUrls: xImages(tweet), ...(isMutual === undefined ? {} : { isMutual }) };
 }
 
 function timelineEntries(data: unknown): unknown[] {

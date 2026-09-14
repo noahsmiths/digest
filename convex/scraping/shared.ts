@@ -75,6 +75,7 @@ async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts
       images: post.imageUrls
         .map((sourceURL) => imageCache.get(sourceURL) ?? null)
         .filter((image): image is ScrapedPost['images'][number] => image !== null),
+      ...(post.isMutual === undefined ? {} : { isMutual: post.isMutual }),
     }))
     .filter((post) => post.body.trim() !== '' || post.images.length > 0);
 }

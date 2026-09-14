@@ -11,10 +11,8 @@ const services = [
 ] as const;
 
 const categories = [
-  { id: 'news', name: 'News' },
   { id: 'social', name: 'Social' },
-  { id: 'artists', name: 'Artists' },
-  { id: 'other', name: 'Other' },
+  { id: 'event', name: 'Upcoming events' },
 ] as const;
 
 type Service = (typeof services)[number]['id'];
@@ -83,14 +81,12 @@ function Content() {
 
   const groupedPosts = useMemo(() => {
     const grouped: Record<Category, NonNullable<typeof selectedDigest>['posts']> = {
-      news: [],
       social: [],
-      artists: [],
-      other: [],
+      event: [],
     };
     if (selectedDigest === undefined || selectedDigest === null) return grouped;
     for (const post of selectedDigest.posts) {
-      if (post.category !== undefined) grouped[post.category].push(post);
+      if (post.category === 'social' || post.category === 'event') grouped[post.category].push(post);
     }
     return grouped;
   }, [selectedDigest]);
@@ -340,8 +336,7 @@ function DigestDetail({
       )}
       {digest.classificationFallbackCount > 0 && (
         <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          {digest.classificationFallbackCount} posts were placed in Other because GPT-5 could not categorize their
-          batch.
+          {digest.classificationFallbackCount} posts were omitted because GPT-5 could not categorize their batch.
         </div>
       )}
       {digest.status === 'failed' && (

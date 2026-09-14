@@ -12,6 +12,7 @@ export const scrapedPostValidator = v.object({
   author: v.string(),
   body: v.string(),
   images: v.array(scrapedImageValidator),
+  isMutual: v.optional(v.boolean()),
 });
 
 export type RawPost = {
@@ -19,6 +20,7 @@ export type RawPost = {
   author: string;
   body: string;
   imageUrls: string[];
+  isMutual?: boolean;
 };
 
 export type ScrapedPost = {
@@ -29,6 +31,7 @@ export type ScrapedPost = {
     storageId: Id<'_storage'>;
     url: string;
   }>;
+  isMutual?: boolean;
 };
 
 export type OpenedBrowserSession = {

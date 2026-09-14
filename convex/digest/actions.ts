@@ -4,7 +4,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { v } from 'convex/values';
 import { internal } from '../_generated/api';
 import { env, internalAction } from '../_generated/server';
-import { digestCategoryValidator, serviceValidator } from '../schema';
+import { digestDecisionValidator, serviceValidator } from '../schema';
 import { scrapeInstagramFeed } from '../scraping/instagram';
 import { scrapeLinkedInFeed } from '../scraping/linkedin';
 import { scrapeServiceWithSession, withBrowserSession } from '../scraping/shared';
@@ -109,7 +109,7 @@ export const classifyPosts = internalAction({
   returns: v.array(
     v.object({
       digestPostId: v.id('digestPosts'),
-      category: digestCategoryValidator,
+      category: digestDecisionValidator,
     }),
   ),
   handler: async (ctx, { digestPostIds }): Promise<DigestClassification[]> => {

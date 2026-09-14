@@ -6,7 +6,7 @@ import { components } from '../_generated/api';
 import type { Doc, Id } from '../_generated/dataModel';
 import type { ActionCtx } from '../_generated/server';
 
-const categorySchema = z.enum(['news', 'social', 'artists', 'other']);
+const categorySchema = z.enum(['social', 'event', 'drop']);
 const classificationSchema = z.object({
   classifications: z.array(
     z.object({
@@ -16,12 +16,10 @@ const classificationSchema = z.object({
   ),
 });
 
-const classifierInstructions = `Categorize every supplied post using its content and author. We want to be pretty conservative with what we categorize into the main categories, and if something's not very clear, opt to put it in "Other"
-News: reporting or analysis of current day-to-day politics, economics, etc. Anything that a news outlet might cover but nothing pop-media. This should be things that are substantial and are important for people to know about
-Artists: creative work, releases, performances, process, or shows
-Events: any meetups or scheduled events that don't fall under the artists category. These should have explicit times and dates
-Social: life updates strictly from friends, sort of classical old-school social media posts showing things like trips or birthday parties
-Other: anything outside those definitions.
+const classifierInstructions = `Keep only social updates and upcoming events. Categorize every supplied post as "social", "event", or "drop".
+Social: personal life updates from friends, such as trips, birthdays, conversations, or community updates. If the post isn't a mutual, do not include it. Only make a decision yourself if it's 'unknown'. This should not include too many career related posts, especially if they are very long.
+Event: a future meetup, gathering, performance, or other scheduled event with enough concrete timing or planning information to be useful.
+Drop: everything else, including news, general opinions, professional updates, creative work, promotions, and posts that are not clearly social or upcoming events.
 Return exactly one classification for every ordinal. Do not rewrite, summarize, or quote the posts.`;
 
 export type DigestClassification = {
@@ -32,14 +30,14 @@ export type DigestClassification = {
 export async function classifyPostsWithModel(
   ctx: ActionCtx,
   userId: string,
-  posts: Array<Pick<Doc<'digestPosts'>, '_id' | 'author' | 'body' | 'imageStorageIds'>>,
+  posts: Array<Pick<Doc<'digestPosts'>, '_id' | 'author' | 'body' | 'imageStorageIds' | 'isMutual'>>,
   languageModel: LanguageModelV4,
 ): Promise<DigestClassification[]> {
   const content: UserContent = [];
   for (const [ordinal, post] of posts.entries()) {
     content.push({
       type: 'text',
-      text: `Post ${ordinal}\nAuthor: ${post.author}\nBody: ${post.body === '' ? '[No text]' : post.body}`,
+      text: `Post ${ordinal}\nAuthor: ${post.author}\nMutual: ${post.isMutual === true ? 'yes' : post.isMutual === false ? 'no' : 'unknown'}\nBody: ${post.body === '' ? '[No text]' : post.body}`,
     });
     for (const storageId of post.imageStorageIds) {
       const url = await ctx.storage.getUrl(storageId);

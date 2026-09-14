@@ -4,7 +4,7 @@ import { v } from 'convex/values';
 import { components, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { internalMutation, internalQuery, mutation, query } from './_generated/server';
-import schema, { digestCategoryValidator, serviceValidator } from './schema';
+import schema, { digestDecisionValidator, serviceValidator } from './schema';
 import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
 import type { Service } from './utilities/sites';
@@ -202,6 +202,7 @@ export const saveScrapedPosts = internalMutation({
         author: post.author,
         body: post.body,
         imageStorageIds: post.images.map(({ storageId }) => storageId),
+        ...(post.isMutual === undefined ? {} : { isMutual: post.isMutual }),
       };
       const existing = existingBySourceId.get(post.sourcePostId);
       if (existing === undefined) {
@@ -336,7 +337,7 @@ export const applyClassifications = internalMutation({
     classifications: v.array(
       v.object({
         digestPostId: v.id('digestPosts'),
-        category: digestCategoryValidator,
+        category: digestDecisionValidator,
       }),
     ),
   },
@@ -346,27 +347,51 @@ export const applyClassifications = internalMutation({
     if (digest === null || digest.status !== 'running') {
       throw new Error('DIGEST_NOT_RUNNING');
     }
-    let fallbackDelta = 0;
-    for (const classification of classifications) {
-      const post = await ctx.db.get('digestPosts', classification.digestPostId);
-      if (post === null || post.digestId !== digestId) {
-        throw new Error('DIGEST_POST_NOT_FOUND');
+    const posts = await Promise.all(
+      classifications.map(async (classification) => {
+        const post = await ctx.db.get('digestPosts', classification.digestPostId);
+        if (post === null || post.digestId !== digestId) {
+          throw new Error('DIGEST_POST_NOT_FOUND');
+        }
+        return { classification, post };
+      }),
+    );
+    const droppedPostIds = new Set(
+      posts.filter(({ classification }) => classification.category === 'drop').map(({ post }) => post._id),
+    );
+    const remainingPosts = await ctx.db
+      .query('digestPosts')
+      .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
+      .take(MAX_DIGEST_POSTS);
+    const retainedStorageIds = new Set(
+      remainingPosts
+        .filter((post) => !droppedPostIds.has(post._id))
+        .flatMap((post) => post.imageStorageIds),
+    );
+    const storageIdsToDelete = new Set<Id<'_storage'>>();
+    for (const { classification, post } of posts) {
+      if (classification.category === 'drop') {
+        for (const storageId of post.imageStorageIds) {
+          if (!retainedStorageIds.has(storageId)) storageIdsToDelete.add(storageId);
+        }
+        await ctx.db.delete('digestPosts', post._id);
+      } else {
+        await ctx.db.patch('digestPosts', post._id, {
+          category: classification.category,
+          classificationSource: source,
+        });
       }
-      if (post.classificationSource === 'fallback') {
-        fallbackDelta -= 1;
-      }
-      if (source === 'fallback') {
-        fallbackDelta += 1;
-      }
-      await ctx.db.patch('digestPosts', post._id, {
-        category: classification.category,
-        classificationSource: source,
-      });
     }
-    if (fallbackDelta !== 0) {
+    for (const storageId of storageIdsToDelete) {
+      await ctx.storage.delete(storageId);
+    }
+    if (source === 'fallback') {
       await ctx.db.patch('digests', digestId, {
-        classificationFallbackCount: digest.classificationFallbackCount + fallbackDelta,
+        classificationFallbackCount: digest.classificationFallbackCount + classifications.length,
+        postCount: digest.postCount - droppedPostIds.size,
       });
+    } else if (droppedPostIds.size > 0) {
+      await ctx.db.patch('digests', digestId, { postCount: digest.postCount - droppedPostIds.size });
     }
     return null;
   },

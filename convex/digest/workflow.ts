@@ -2,12 +2,12 @@ import { WorkflowManager } from '@convex-dev/workflow';
 import { v, type Infer } from 'convex/values';
 import { components, internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
-import { digestCategoryValidator } from '../schema';
+import { digestDecisionValidator } from '../schema';
 
 const CLASSIFICATION_BATCH_SIZE = 10;
 const RETRY_BEHAVIOR = { maxAttempts: 3, initialBackoffMs: 1_000, base: 2 } as const;
 
-type Category = Infer<typeof digestCategoryValidator>;
+type Category = Infer<typeof digestDecisionValidator>;
 type Classification = { digestPostId: Id<'digestPosts'>; category: Category };
 
 export const workflow = new WorkflowManager(components.workflow, {
@@ -95,7 +95,7 @@ export const runDigest = workflow.define({
         } catch {
           return {
             source: 'fallback',
-            classifications: batch.map((digestPostId) => ({ digestPostId, category: 'other' })),
+            classifications: batch.map((digestPostId) => ({ digestPostId, category: 'drop' })),
           };
         }
       }),
