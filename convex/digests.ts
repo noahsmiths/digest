@@ -125,25 +125,30 @@ export const start = mutation({
   },
 });
 
-export const getScrapeContext = internalQuery({
-  args: { digestId: v.id('digests'), service: serviceValidator },
-  returns: v.union(v.object({ firecrawlProfileName: v.string() }), v.null()),
-  handler: async (ctx, { digestId, service }) => {
+export const getScrapeContexts = internalQuery({
+  args: { digestId: v.id('digests') },
+  returns: v.array(
+    v.object({
+      service: serviceValidator,
+      firecrawlProfileName: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: async (ctx, { digestId }) => {
     const digest = await ctx.db.get('digests', digestId);
-    if (
-      digest === null ||
-      digest.status !== 'running' ||
-      !digest.serviceResults.some((result) => result.service === service)
-    ) {
-      return null;
+    if (digest === null || digest.status !== 'running') {
+      throw new Error('DIGEST_NOT_RUNNING');
     }
-    const linkedService = await ctx.db
-      .query('linkedServices')
-      .withIndex('by_userTokenIdentifier_and_service', (q) =>
-        q.eq('userTokenIdentifier', digest.userTokenIdentifier).eq('service', service),
-      )
-      .first();
-    return linkedService === null ? null : { firecrawlProfileName: linkedService.firecrawlProfileName };
+    return await Promise.all(
+      digest.serviceResults.map(async ({ service }) => {
+        const linkedService = await ctx.db
+          .query('linkedServices')
+          .withIndex('by_userTokenIdentifier_and_service', (q) =>
+            q.eq('userTokenIdentifier', digest.userTokenIdentifier).eq('service', service),
+          )
+          .first();
+        return { service, firecrawlProfileName: linkedService?.firecrawlProfileName ?? null };
+      }),
+    );
   },
 });
 

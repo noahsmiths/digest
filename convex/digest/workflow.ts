@@ -26,6 +26,9 @@ function scrapeErrorCode(error: unknown) {
   if (message.includes('FEED_CAPTURE_TIMEOUT')) {
     return 'FEED_CAPTURE_TIMEOUT';
   }
+  if (message.includes('FEED_POST_THRESHOLD_NOT_REACHED')) {
+    return 'POST_THRESHOLD_NOT_REACHED';
+  }
   return 'SCRAPE_FAILED';
 }
 
@@ -37,19 +40,34 @@ export const runDigest = workflow.define({
       { digestId },
     );
 
-    for (const service of state.services) {
-      try {
-        const postCount: number = await step.runAction(
-          internal.digest.actions.scrapeServiceToDigest,
-          { digestId, service, maxPosts: state.maxPostsPerService },
-          { name: `scrape-${service}`, retry: RETRY_BEHAVIOR },
-        );
-        await step.runMutation(
-          internal.digests.recordServiceSuccess,
-          { digestId, service, postCount },
-          { name: `record-${service}-success` },
-        );
-      } catch (error) {
+    try {
+      const results: Array<{
+        service: 'instagram' | 'x' | 'linkedin';
+        status: 'succeeded' | 'failed';
+        postCount: number;
+        errorCode?: string;
+      }> = await step.runAction(
+        internal.digest.actions.scrapeServicesToDigest,
+        { digestId, services: state.services, maxPosts: state.maxPostsPerService },
+        { name: 'scrape-services', retry: RETRY_BEHAVIOR },
+      );
+      for (const result of results) {
+        if (result.status === 'succeeded') {
+          await step.runMutation(
+            internal.digests.recordServiceSuccess,
+            { digestId, service: result.service, postCount: result.postCount },
+            { name: `record-${result.service}-success` },
+          );
+        } else {
+          await step.runMutation(
+            internal.digests.recordServiceFailure,
+            { digestId, service: result.service, errorCode: result.errorCode ?? 'SCRAPE_FAILED' },
+            { name: `record-${result.service}-failure` },
+          );
+        }
+      }
+    } catch (error) {
+      for (const service of state.services) {
         await step.runMutation(
           internal.digests.recordServiceFailure,
           { digestId, service, errorCode: scrapeErrorCode(error) },

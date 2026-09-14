@@ -1,9 +1,14 @@
+'use node';
+
 import type { Page, Response } from 'playwright-core';
+import { hasPostContent } from './shared';
 import type { RawPost } from './types';
 
 type ResponseParser = (data: unknown, response: Response) => RawPost[];
 const INITIAL_RESPONSE_TIMEOUT = 30_000;
-const PAGINATION_RESPONSE_TIMEOUT = 10_000;
+const MAX_SCROLLS = 240;
+const SCROLL_DISTANCE = 8_000;
+const SCROLL_PAUSE_MS = 500;
 
 export async function collectFeedResponses({
   page,
@@ -39,7 +44,7 @@ export async function collectFeedResponses({
           data = text;
         }
         for (const post of parse(data, response)) {
-          if (!posts.has(post.id)) {
+          if (hasPostContent(post) && !posts.has(post.id)) {
             posts.set(post.id, post);
           }
         }
@@ -58,22 +63,10 @@ export async function collectFeedResponses({
     await initialResponse;
     await Promise.all(pending);
 
-    let attemptsWithoutProgress = 0;
-    while (posts.size < maxPosts) {
-      const previousSize = posts.size;
-      const nextResponse = page.waitForResponse(matches, { timeout: PAGINATION_RESPONSE_TIMEOUT }).catch(() => null);
-      await page.mouse.wheel(0, 4_000);
-      await nextResponse;
+    for (let scrolls = 0; posts.size < maxPosts && scrolls < MAX_SCROLLS; scrolls += 1) {
+      await page.mouse.wheel(0, SCROLL_DISTANCE);
+      await page.waitForTimeout(SCROLL_PAUSE_MS);
       await Promise.all(pending);
-
-      if (posts.size === previousSize) {
-        attemptsWithoutProgress += 1;
-      } else {
-        attemptsWithoutProgress = 0;
-      }
-      if (attemptsWithoutProgress >= 3) {
-        break;
-      }
     }
   } finally {
     page.off('response', handleResponse);
@@ -89,6 +82,9 @@ export async function collectFeedResponses({
   }
   if (posts.size === 0 && firstResponseError !== null) {
     throw firstResponseError;
+  }
+  if (posts.size < maxPosts) {
+    throw new Error('FEED_POST_THRESHOLD_NOT_REACHED');
   }
 
   return [...posts.values()].slice(0, maxPosts);

@@ -7,11 +7,16 @@ import { env } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { getIdentityOrThrow } from '../utilities/auth';
 import type { Service } from '../utilities/sites';
-import type { OpenedBrowserSession, RawPost, ScrapedPost, ServiceScraper } from './types';
+import { type OpenedBrowserSession, type RawPost, type ScrapedPost, type ServiceScraper } from './types';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const IMAGE_CONCURRENCY = 6;
 const SESSION_RETRY_DELAYS = [2_000, 4_000, 8_000, 12_000];
+const CAPTURE_OVERSCAN = 10;
+
+export function hasPostContent(post: Pick<RawPost, 'body' | 'imageUrls'>) {
+  return post.body.trim() !== '' || post.imageUrls.length > 0;
+}
 
 export function validateMaxPosts(maxPosts: number) {
   if (!Number.isInteger(maxPosts) || maxPosts < 1) {
@@ -42,8 +47,9 @@ async function downloadImage(session: OpenedBrowserSession, sourceURL: string): 
 }
 
 async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts: RawPost[]): Promise<ScrapedPost[]> {
+  const postsWithContent = posts.filter(hasPostContent);
   const imageCache = new Map<string, ScrapedPost['images'][number] | null>();
-  const sourceURLs = [...new Set(posts.flatMap((post) => post.imageUrls))];
+  const sourceURLs = [...new Set(postsWithContent.flatMap((post) => post.imageUrls))];
   let nextImage = 0;
   const workers = Array.from({ length: Math.min(IMAGE_CONCURRENCY, sourceURLs.length) }, async () => {
     while (nextImage < sourceURLs.length) {
@@ -61,7 +67,7 @@ async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts
   });
   await Promise.all(workers);
 
-  return posts
+  return postsWithContent
     .map((post) => ({
       sourcePostId: post.id,
       author: post.author,
@@ -120,6 +126,30 @@ export async function runServiceScraperWithProfile(
 ): Promise<ScrapedPost[]> {
   validateMaxPosts(maxPosts);
 
+  return await withBrowserSession(firecrawlProfileName, async (session) =>
+    scrapeServiceWithSession(ctx, session, maxPosts, scrape),
+  );
+}
+
+export async function scrapeServiceWithSession(
+  ctx: ActionCtx,
+  session: OpenedBrowserSession,
+  maxPosts: number,
+  scrape: ServiceScraper,
+): Promise<ScrapedPost[]> {
+  validateMaxPosts(maxPosts);
+  const rawPosts = await scrape(session, maxPosts + CAPTURE_OVERSCAN);
+  const posts = await persistPosts(ctx, session, rawPosts);
+  if (posts.length < maxPosts) {
+    throw new Error('FEED_POST_THRESHOLD_NOT_REACHED');
+  }
+  return posts.slice(0, maxPosts);
+}
+
+export async function withBrowserSession<T>(
+  firecrawlProfileName: string,
+  run: (session: OpenedBrowserSession) => Promise<T>,
+): Promise<T> {
   const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
   const firecrawlSession = await openBrowserSession(firecrawl, firecrawlProfileName);
   if (!firecrawlSession.id || !firecrawlSession.cdpUrl) {
@@ -136,10 +166,9 @@ export async function runServiceScraperWithProfile(
     }
     const page = context.pages()[0] ?? (await context.newPage());
     const session = { browser, context, page };
-    const rawPosts = await scrape(session, maxPosts);
-    const posts = await persistPosts(ctx, session, rawPosts);
+    const result = await run(session);
     completed = true;
-    return posts;
+    return result;
   } finally {
     await browser?.close().catch(() => null);
     const deleteResult = await firecrawl.deleteBrowser(firecrawlSession.id);

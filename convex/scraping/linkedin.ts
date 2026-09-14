@@ -3,10 +3,13 @@
 import { v } from 'convex/values';
 import { action } from '../_generated/server';
 import { array, firstStringAt, object, string } from './data';
-import { runServiceScraper } from './shared';
+import { hasPostContent, runServiceScraper } from './shared';
 import { scrapedPostValidator, type OpenedBrowserSession, type RawPost } from './types';
 
 const PAGE_SIZE = 20;
+const MAX_FEED_REQUESTS = 240;
+const SCROLL_DISTANCE = 8_000;
+const SCROLL_PAUSE_MS = 500;
 
 function vectorImageURL(value: unknown): string | null {
   const record = object(value);
@@ -135,19 +138,27 @@ export async function scrapeLinkedInFeed(session: OpenedBrowserSession, maxPosts
   await selectRecentFeed(session);
 
   const posts = new Map<string, RawPost>();
-  const seenTokens = new Set<string>();
   let token: string | null = null;
-  for (let start = 0; posts.size < maxPosts; start += PAGE_SIZE) {
+  for (
+    let start = 0, requests = 0;
+    posts.size < maxPosts && requests < MAX_FEED_REQUESTS;
+    start += PAGE_SIZE, requests += 1
+  ) {
+    await session.page.mouse.wheel(0, SCROLL_DISTANCE);
+    await session.page.waitForTimeout(SCROLL_PAUSE_MS);
     const data = await fetchFeedPage(session, start, token);
     for (const post of parseLinkedInResponse(data)) {
-      posts.set(post.id, post);
+      if (hasPostContent(post)) {
+        posts.set(post.id, post);
+      }
     }
     const nextToken = paginationToken(data);
-    if (nextToken === null || seenTokens.has(nextToken)) {
-      break;
+    if (nextToken !== null) {
+      token = nextToken;
     }
-    seenTokens.add(nextToken);
-    token = nextToken;
+  }
+  if (posts.size < maxPosts) {
+    throw new Error('FEED_POST_THRESHOLD_NOT_REACHED');
   }
   return [...posts.values()].slice(0, maxPosts);
 }

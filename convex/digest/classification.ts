@@ -16,10 +16,11 @@ const classificationSchema = z.object({
   ),
 });
 
-const classifierInstructions = `Categorize every supplied post using its content first and its author only as a tie-breaker.
-News: reporting or analysis of current politics. Nothing pop-media
-Artists: creative work, releases, performances, process, or creator updates.
-Social: personal or professional life, opinions, conversations, or community updates.
+const classifierInstructions = `Categorize every supplied post using its content and author. We want to be pretty conservative with what we categorize into the main categories, and if something's not very clear, opt to put it in "Other"
+News: reporting or analysis of current day-to-day politics, economics, etc. Anything that a news outlet might cover but nothing pop-media. This should be things that are substantial and are important for people to know about
+Artists: creative work, releases, performances, process, or shows
+Events: any meetups or scheduled events that don't fall under the artists category. These should have explicit times and dates
+Social: life updates strictly from friends, sort of classical old-school social media posts showing things like trips or birthday parties
 Other: anything outside those definitions.
 Return exactly one classification for every ordinal. Do not rewrite, summarize, or quote the posts.`;
 
