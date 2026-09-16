@@ -43,6 +43,16 @@ export default defineSchema({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
   }),
+  userPreferences: defineTable({
+    userId: v.id('users'),
+    userTokenIdentifier: v.optional(v.string()),
+    automaticDigestEnabled: v.boolean(),
+    deliveryTime: v.string(),
+    timeZone: v.string(),
+    nextDeliveryAt: v.number(),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_automaticDigestEnabled_and_nextDeliveryAt', ['automaticDigestEnabled', 'nextDeliveryAt']),
   linkedServices: defineTable({
     userTokenIdentifier: v.string(),
     service: serviceValidator,

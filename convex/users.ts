@@ -1,8 +1,30 @@
 import { vGithubProfile } from '@convex-dev/auth/providers/oauth/github';
 import { validateEmailFormat } from '@convex-dev/auth/email/validation';
 import { ConvexError, v } from 'convex/values';
-import { internalMutation, query } from './_generated/server';
+import type { Id } from './_generated/dataModel';
+import { internalMutation, query, type MutationCtx } from './_generated/server';
 import schema from './schema';
+
+const DEFAULT_DELIVERY_TIME = '08:00';
+
+function initialDeliveryAt() {
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0);
+  return today > now.getTime() ? today : today + 24 * 60 * 60 * 1000;
+}
+
+async function createDefaultPreferences(
+  ctx: MutationCtx,
+  userId: Id<'users'>,
+) {
+  await ctx.db.insert('userPreferences', {
+    userId,
+    automaticDigestEnabled: true,
+    deliveryTime: DEFAULT_DELIVERY_TIME,
+    timeZone: 'UTC',
+    nextDeliveryAt: initialDeliveryAt(),
+  });
+}
 
 export const createUserPassword = internalMutation({
   args: {
@@ -15,7 +37,9 @@ export const createUserPassword = internalMutation({
     if (validateEmailFormat(profile.username) !== null) {
       throw new ConvexError('Enter a valid email address.');
     }
-    return await ctx.db.insert('users', { email: profile.username });
+    const userId = await ctx.db.insert('users', { email: profile.username });
+    await createDefaultPreferences(ctx, userId);
+    return userId;
   },
 });
 
@@ -27,11 +51,13 @@ export const createUserGithub = internalMutation({
   },
   returns: v.id('users'),
   handler: async (ctx, { profile }) => {
-    return await ctx.db.insert('users', {
+    const userId = await ctx.db.insert('users', {
       email: profile.email,
       name: profile.name,
       avatarUrl: profile.avatarUrl,
     });
+    await createDefaultPreferences(ctx, userId);
+    return userId;
   },
 });
 

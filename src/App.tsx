@@ -1,11 +1,11 @@
 import { Authenticated, Unauthenticated, useAction, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../convex/_generated/api';
 import type { Id } from '../convex/_generated/dataModel';
 import { AuthButton } from './auth/AuthForm';
 import { DigestPage, type DigestData } from './ui/DigestPage';
 import { LandingPage } from './ui/LandingPage';
-import { ServicesPage } from './ui/ServicesPage';
+import { SettingsPage } from './ui/SettingsPage';
 import { Brand } from './ui/Chrome';
 import { serviceName, type Category, type Page, type Service } from './ui/shared';
 
@@ -20,7 +20,7 @@ export default function App() {
 
 function readPageFromURL(): Page | null {
   const query = new URLSearchParams(window.location.search);
-  if (query.get('page') === 'services') return 'services';
+  if (query.get('page') === 'settings' || query.get('page') === 'services') return 'settings';
   if (query.get('page') === 'digest' || query.has('digest')) return 'digest';
   return null;
 }
@@ -34,6 +34,9 @@ function SignedInApp() {
   const loginToService = useAction(api.login.node.startLoginSession);
   const completeLogin = useAction(api.login.node.completeLoginSession);
   const disconnectService = useAction(api.login.node.disconnectService);
+  const preferences = useQuery(api.preferences.get);
+  const ensurePreferences = useMutation(api.preferences.ensure);
+  const updatePreferences = useMutation(api.preferences.update);
 
   const [pageOverride, setPageOverride] = useState<Page | null>(readPageFromURL);
   const [selectedDigestId, setSelectedDigestId] = useState<Id<'digests'> | null>(
@@ -46,6 +49,7 @@ function SignedInApp() {
   const [isSaving, setIsSaving] = useState(false);
   const [isStartingDigest, setIsStartingDigest] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasEnsuredPreferences = useRef(false);
 
   useEffect(() => {
     const restorePage = () => {
@@ -56,7 +60,14 @@ function SignedInApp() {
     return () => window.removeEventListener('popstate', restorePage);
   }, []);
 
-  const page = pageOverride ?? (linkedServices?.length === 0 ? 'services' : 'digest');
+  useEffect(() => {
+    if (preferences === undefined || hasEnsuredPreferences.current) return;
+    hasEnsuredPreferences.current = true;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    void ensurePreferences({ timeZone });
+  }, [ensurePreferences, preferences]);
+
+  const page = pageOverride ?? (linkedServices?.length === 0 ? 'settings' : 'digest');
   const currentDigestId = selectedDigestId ?? digests[0]?._id ?? null;
   const selectedDigest = useQuery(api.digests.get, currentDigestId === null ? 'skip' : { digestId: currentDigestId });
   const activeDigest = digests.find(({ status }) => status === 'running');
@@ -75,14 +86,14 @@ function SignedInApp() {
     if (nextPage === 'digest' && digestId !== null) setSelectedDigestId(digestId);
     const query = new URLSearchParams(window.location.search);
     query.set('page', nextPage);
-    if (nextPage === 'services') query.delete('digest');
+    if (nextPage === 'settings') query.delete('digest');
     else if (digestId !== null) query.set('digest', digestId);
     window.history.pushState(null, '', `${window.location.pathname}?${query.toString()}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const startLogin = async (service: Service) => {
-    setPageOverride('services');
+    setPageOverride('settings');
     setLoggingInService(service);
     setError(null);
     try {
@@ -139,21 +150,35 @@ function SignedInApp() {
     }
   };
 
+  const savePreferences = async ({ automaticDigestEnabled, deliveryTime }: { automaticDigestEnabled: boolean; deliveryTime: string }) => {
+    setError(null);
+    try {
+      await updatePreferences({
+        automaticDigestEnabled,
+        deliveryTime,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+      });
+    } catch (cause) {
+      console.error('Failed to save delivery settings:', cause);
+      setError('Could not save your delivery settings. Try again.');
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="site-header app-header">
         <Brand />
         <nav className="app-nav" aria-label="Main navigation">
           <button type="button" className={page === 'digest' ? 'nav-link active' : 'nav-link'} aria-current={page === 'digest' ? 'page' : undefined} onClick={() => navigate('digest')}>Digest</button>
-          <button type="button" className={page === 'services' ? 'nav-link active' : 'nav-link'} aria-current={page === 'services' ? 'page' : undefined} onClick={() => navigate('services')}>Connections</button>
+          <button type="button" className={page === 'settings' ? 'nav-link active' : 'nav-link'} aria-current={page === 'settings' ? 'page' : undefined} onClick={() => navigate('settings')}>Settings</button>
         </nav>
         <AuthButton className="header-auth" />
       </header>
 
-      {linkedServices === undefined ? (
+      {linkedServices === undefined || preferences === undefined ? (
         <main className="app-loading" aria-live="polite">Opening your reading space…</main>
-      ) : page === 'services' ? (
-        <ServicesPage
+      ) : page === 'settings' ? (
+        <SettingsPage
           linkedServices={linkedServices}
           activeService={activeService}
           firecrawlLiveViewURL={firecrawlLiveViewURL}
@@ -161,9 +186,11 @@ function SignedInApp() {
           disconnectingService={disconnectingService}
           isSaving={isSaving}
           error={error}
+          preferences={preferences}
           onConnect={startLogin}
           onDisconnect={disconnectFromService}
           onSave={saveLogin}
+          onSavePreferences={savePreferences}
           onDigest={() => navigate('digest')}
         />
       ) : (
@@ -180,7 +207,7 @@ function SignedInApp() {
           error={error}
           onGenerate={generateDigest}
           onSelectDigest={(digestId) => navigate('digest', digestId)}
-          onServices={() => navigate('services')}
+          onSettings={() => navigate('settings')}
         />
       )}
     </div>

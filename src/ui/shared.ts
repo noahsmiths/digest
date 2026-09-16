@@ -11,7 +11,7 @@ export const categories = [
 
 export type Service = (typeof services)[number]['id'];
 export type Category = (typeof categories)[number]['id'];
-export type Page = 'digest' | 'services';
+export type Page = 'digest' | 'settings';
 
 export function serviceName(service: Service) {
   return services.find(({ id }) => id === service)?.name ?? service;

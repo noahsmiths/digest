@@ -27,7 +27,7 @@ export function DigestPage({
   error,
   onGenerate,
   onSelectDigest,
-  onServices,
+  onSettings,
 }: {
   linkedServices: Service[];
   digests: HistoryItem[];
@@ -41,7 +41,7 @@ export function DigestPage({
   error: string | null;
   onGenerate: () => Promise<void>;
   onSelectDigest: (digestId: Id<'digests'>) => void;
-  onServices: () => void;
+  onSettings: () => void;
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   return (
@@ -67,7 +67,7 @@ export function DigestPage({
       {linkedServices.length === 0 && (
         <div className="inline-alert empty-alert">
           <p>Connect a service before making a digest.</p>
-          <button type="button" className="text-action" onClick={onServices}>Open connections <ArrowIcon /></button>
+          <button type="button" className="text-action" onClick={onSettings}>Open settings <ArrowIcon /></button>
         </div>
       )}
 

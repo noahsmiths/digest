@@ -116,6 +116,24 @@ svg { display: block; }
 .connection-login h3 { margin: 0 0 4px; font-family: var(--font-letter); font-size: 30px; font-weight: 500; }
 .connection-login p { margin: 0; color: var(--ink-soft); }
 .connection-login iframe { width: 100%; height: 520px; border: 1px solid var(--paper-rule); background: #fff; }
+.delivery-settings { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 22px 34px; margin-top: 36px; padding-top: 30px; border-top: 1px solid var(--ink); }
+.delivery-settings-heading { grid-column: 1 / -1; }
+.delivery-settings-heading h2 { margin: 0 0 4px; font-family: var(--font-letter); font-size: 32px; font-weight: 500; line-height: 1; }
+.delivery-settings-heading p { margin: 0; color: var(--ink-soft); font-size: 17px; }
+.delivery-switch { display: flex; align-items: flex-start; gap: 13px; cursor: pointer; }
+.delivery-switch input { position: absolute; opacity: 0; }
+.delivery-switch-control { display: flex; align-items: center; width: 42px; height: 24px; margin-top: 2px; padding: 2px; border: 1px solid var(--ink-soft); background: var(--paper); transition: background .16s ease-out, border-color .16s ease-out; }
+.delivery-switch-control span { width: 18px; height: 18px; background: var(--ink-soft); transition: transform .16s ease-out, background .16s ease-out; }
+.delivery-switch input:checked + .delivery-switch-control { border-color: var(--ink); background: var(--ink); }
+.delivery-switch input:checked + .delivery-switch-control span { transform: translateX(18px); background: var(--paper); }
+.delivery-switch input:focus-visible + .delivery-switch-control { outline: 3px solid var(--seal); outline-offset: 3px; }
+.delivery-switch strong, .delivery-time-field > span { display: block; font-size: 17px; font-weight: 700; }
+.delivery-switch small, .delivery-time-field small { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 15px; line-height: 1.25; }
+.delivery-time-field { display: grid; grid-template-columns: auto 120px; align-items: center; gap: 9px 15px; }
+.delivery-time-field input { width: 120px; height: 41px; padding: 6px 9px; border: 1px solid var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); font: inherit; }
+.delivery-time-field input:focus { border-color: var(--ink); outline: 3px solid var(--seal); outline-offset: 3px; }
+.delivery-time-field input:disabled { opacity: .48; }
+.delivery-time-field small { grid-column: 1 / -1; }
 
 .digest-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 38px; }
 .digest-heading .primary-action { margin-bottom: 3px; }
@@ -246,6 +264,8 @@ svg { display: block; }
   .service-row { min-height: 132px; flex-wrap: wrap; gap: 7px; padding: 20px 0; }
   .service-action { width: 100%; justify-content: space-between; }
   .settings-sheet-foot { flex-direction: column; align-items: flex-start; }
+  .delivery-settings { grid-template-columns: 1fr; gap: 22px; }
+  .delivery-time-field { width: 100%; grid-template-columns: 1fr 120px; }
   .digest-heading { align-items: flex-start; flex-direction: column; gap: 13px; margin-bottom: 17px; }
   .digest-heading h1 { font-size: 42px; margin-bottom: 0; }
   .digest-heading p { display: none; }

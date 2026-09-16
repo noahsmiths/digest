@@ -3,7 +3,7 @@ import { paginationOptsValidator, paginationResultValidator } from 'convex/serve
 import { v, type Infer } from 'convex/values';
 import { components, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { env, internalMutation, internalQuery, mutation, query } from './_generated/server';
+import { env, internalMutation, internalQuery, mutation, query, type MutationCtx } from './_generated/server';
 import schema, { digestDecisionValidator, serviceValidator } from './schema';
 import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
@@ -98,52 +98,74 @@ export const start = mutation({
   handler: async (ctx): Promise<Id<'digests'>> => {
     const identity = await getIdentityOrThrow(ctx);
     const userId = ctx.db.normalizeId('users', identity.subject);
-    const user = userId === null ? null : await ctx.db.get('users', userId);
-    const activeDigest = await ctx.db
-      .query('digests')
-      .withIndex('by_userTokenIdentifier_and_status', (q) =>
-        q.eq('userTokenIdentifier', identity.tokenIdentifier).eq('status', 'running'),
-      )
-      .first();
-    if (activeDigest !== null) {
-      return activeDigest._id;
-    }
-
-    const linkedServices = await ctx.db
-      .query('linkedServices')
-      .withIndex('by_userTokenIdentifier_and_service', (q) => q.eq('userTokenIdentifier', identity.tokenIdentifier))
-      .take(100);
-    const connected = new Set(linkedServices.map(({ service }) => service));
-    const services = serviceOrder.filter((service) => connected.has(service));
-    if (services.length === 0) {
+    const digestId = await startDigestForUser(ctx, identity.tokenIdentifier, userId);
+    if (digestId === null) {
       throw new Error('NO_CONNECTED_SERVICES');
     }
-
-    const digestId = await ctx.db.insert('digests', {
-      userTokenIdentifier: identity.tokenIdentifier,
-      status: 'running',
-      stage: 'scraping',
-      maxPostsPerService: MAX_POSTS_PER_SERVICE,
-      serviceResults: services.map((service) => ({ service, status: 'pending' as const, postCount: 0 })),
-      postCount: 0,
-      classificationFallbackCount: 0,
-      ...(user?.email === undefined ? {} : { recipientEmail: user.email }),
-      emailDeliveryStatus: 'pending',
-    });
-    const workflowId: WorkflowId = await startWorkflow(
-      ctx,
-      internal.digest.workflow.runDigest,
-      { digestId },
-      {
-        onComplete: internal.digests.handleWorkflowComplete,
-        context: { digestId },
-        startAsync: true,
-      },
-    );
-    await ctx.db.patch('digests', digestId, { workflowId });
     return digestId;
   },
 });
+
+export const startForUser = internalMutation({
+  args: {
+    userTokenIdentifier: v.string(),
+    userId: v.id('users'),
+  },
+  returns: v.union(v.id('digests'), v.null()),
+  handler: async (ctx, { userTokenIdentifier, userId }) =>
+    await startDigestForUser(ctx, userTokenIdentifier, userId),
+});
+
+async function startDigestForUser(
+  ctx: MutationCtx,
+  userTokenIdentifier: string,
+  userId: Id<'users'> | null,
+): Promise<Id<'digests'> | null> {
+  const user = userId === null ? null : await ctx.db.get('users', userId);
+  const activeDigest = await ctx.db
+    .query('digests')
+    .withIndex('by_userTokenIdentifier_and_status', (q) =>
+      q.eq('userTokenIdentifier', userTokenIdentifier).eq('status', 'running'),
+    )
+    .first();
+  if (activeDigest !== null) {
+    return activeDigest._id;
+  }
+
+  const linkedServices = await ctx.db
+    .query('linkedServices')
+    .withIndex('by_userTokenIdentifier_and_service', (q) => q.eq('userTokenIdentifier', userTokenIdentifier))
+    .take(100);
+  const connected = new Set(linkedServices.map(({ service }) => service));
+  const services = serviceOrder.filter((service) => connected.has(service));
+  if (services.length === 0) {
+    return null;
+  }
+
+  const digestId = await ctx.db.insert('digests', {
+    userTokenIdentifier,
+    status: 'running',
+    stage: 'scraping',
+    maxPostsPerService: MAX_POSTS_PER_SERVICE,
+    serviceResults: services.map((service) => ({ service, status: 'pending' as const, postCount: 0 })),
+    postCount: 0,
+    classificationFallbackCount: 0,
+    ...(user?.email === undefined ? {} : { recipientEmail: user.email }),
+    emailDeliveryStatus: 'pending',
+  });
+  const workflowId: WorkflowId = await startWorkflow(
+    ctx,
+    internal.digest.workflow.runDigest,
+    { digestId },
+    {
+      onComplete: internal.digests.handleWorkflowComplete,
+      context: { digestId },
+      startAsync: true,
+    },
+  );
+  await ctx.db.patch('digests', digestId, { workflowId });
+  return digestId;
+}
 
 export const cancelRunning = internalMutation({
   args: { digestId: v.id('digests') },

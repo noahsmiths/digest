@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as digest_actions from "../digest/actions.js";
 import type * as digest_classification from "../digest/classification.js";
 import type * as digest_diagnostics from "../digest/diagnostics.js";
@@ -17,6 +18,7 @@ import type * as digest_workflow from "../digest/workflow.js";
 import type * as digests from "../digests.js";
 import type * as login from "../login.js";
 import type * as login_node from "../login/node.js";
+import type * as preferences from "../preferences.js";
 import type * as scraping_data from "../scraping/data.js";
 import type * as scraping_instagram from "../scraping/instagram.js";
 import type * as scraping_linkedin from "../scraping/linkedin.js";
@@ -36,6 +38,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  crons: typeof crons;
   "digest/actions": typeof digest_actions;
   "digest/classification": typeof digest_classification;
   "digest/diagnostics": typeof digest_diagnostics;
@@ -44,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   digests: typeof digests;
   login: typeof login;
   "login/node": typeof login_node;
+  preferences: typeof preferences;
   "scraping/data": typeof scraping_data;
   "scraping/instagram": typeof scraping_instagram;
   "scraping/linkedin": typeof scraping_linkedin;

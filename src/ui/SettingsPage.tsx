@@ -1,7 +1,14 @@
+import { useState } from 'react';
 import { ArrowIcon } from './Chrome';
 import { serviceName, services, type Service } from './shared';
 
-export function ServicesPage({
+type Preferences = {
+  automaticDigestEnabled: boolean;
+  deliveryTime: string;
+  timeZone: string;
+};
+
+export function SettingsPage({
   linkedServices,
   activeService,
   firecrawlLiveViewURL,
@@ -9,9 +16,11 @@ export function ServicesPage({
   disconnectingService,
   isSaving,
   error,
+  preferences,
   onConnect,
   onDisconnect,
   onSave,
+  onSavePreferences,
   onDigest,
 }: {
   linkedServices: Service[];
@@ -21,22 +30,24 @@ export function ServicesPage({
   disconnectingService: Service | null;
   isSaving: boolean;
   error: string | null;
+  preferences: Preferences;
   onConnect: (service: Service) => Promise<void>;
   onDisconnect: (service: Service) => Promise<void>;
   onSave: () => Promise<void>;
+  onSavePreferences: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
   onDigest: () => void;
 }) {
   return (
     <main className="settings-page page-frame">
       <div className="page-heading settings-heading">
-        <h1>Choose what comes through.</h1>
-        <p>Connect the services you want Digest to read. You can change this list whenever you like.</p>
+        <h1>Set the pace.</h1>
+        <p>Choose what Digest reads, then decide when your daily letter should arrive.</p>
       </div>
 
-      <section className="settings-sheet letter-sheet" aria-labelledby="settings-title">
+      <section className="settings-sheet letter-sheet" aria-labelledby="connections-title">
         <div className="settings-sheet-head">
           <div>
-            <h2 id="settings-title">Connections</h2>
+            <h2 id="connections-title">Connections</h2>
             <p>{linkedServices.length === 0 ? 'Start with one service.' : `${linkedServices.length} of ${services.length} services connected.`}</p>
           </div>
           <span className="sheet-corner" aria-hidden="true">d.</span>
@@ -88,6 +99,12 @@ export function ServicesPage({
           </div>
         )}
 
+        <DailyDeliverySettings
+          key={`${preferences.automaticDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
+          preferences={preferences}
+          onSave={onSavePreferences}
+        />
+
         <div className="settings-sheet-foot">
           <p>{linkedServices.length === 0 ? 'Connect a service to make your first digest.' : 'Your sources are ready. Your digest is one step away.'}</p>
           <button className="primary-action" type="button" disabled={linkedServices.length === 0} onClick={onDigest}>
@@ -96,5 +113,57 @@ export function ServicesPage({
         </div>
       </section>
     </main>
+  );
+}
+
+function DailyDeliverySettings({
+  preferences,
+  onSave,
+}: {
+  preferences: Preferences;
+  onSave: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
+}) {
+  const [automaticDigestEnabled, setAutomaticDigestEnabled] = useState(preferences.automaticDigestEnabled);
+  const [deliveryTime, setDeliveryTime] = useState(preferences.deliveryTime);
+
+  const updateAutomaticDigest = (enabled: boolean) => {
+    setAutomaticDigestEnabled(enabled);
+    void onSave({ automaticDigestEnabled: enabled, deliveryTime });
+  };
+
+  const updateDeliveryTime = (time: string) => {
+    setDeliveryTime(time);
+    void onSave({ automaticDigestEnabled, deliveryTime: time });
+  };
+
+  return (
+    <section className="delivery-settings" aria-labelledby="delivery-settings-title">
+      <div className="delivery-settings-heading">
+        <h2 id="delivery-settings-title">Daily delivery</h2>
+        <p>A fresh digest is created at your chosen time and emailed when it is ready.</p>
+      </div>
+      <label className="delivery-switch">
+        <input
+          type="checkbox"
+          checked={automaticDigestEnabled}
+          onChange={(event) => updateAutomaticDigest(event.target.checked)}
+        />
+        <span className="delivery-switch-control" aria-hidden="true"><span /></span>
+        <span>
+          <strong>Automatically make my digest</strong>
+          <small>{automaticDigestEnabled ? 'On by default — your next daily letter is scheduled.' : 'Off — you can still make a digest whenever you like.'}</small>
+        </span>
+      </label>
+      <label className="delivery-time-field">
+        <span>Delivery time</span>
+        <input
+          type="time"
+          value={deliveryTime}
+          disabled={!automaticDigestEnabled}
+          onChange={(event) => updateDeliveryTime(event.target.value)}
+        />
+        <small>Your local time zone: {preferences.timeZone}</small>
+      </label>
+    </section>
   );
 }
