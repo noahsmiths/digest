@@ -20,6 +20,8 @@
     "@convex-dev/auth": "^2.0.0-alpha.1",
     "@convex-dev/workflow": "^0.4.7",
     "@convex-dev/workpool": "^0.4.12",
+    "@fontsource/alegreya": "^5.3.0",
+    "@fontsource/alegreya-sans": "^5.3.0",
     "@x402/fetch": "^2.25.0",
     "agentmail": "^0.5.23",
     "ai": "^7.0.99",

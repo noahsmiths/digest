@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T01:45:12Z",
+  "title": "Design System: Digest",
+  "extensions": {
+    "colorMeta": {
+      "field": {
+        "role": "neutral",
+        "displayName": "Sage Field",
+        "canonical": "#e1e9e4",
+        "tonalRamp": [
+          "oklch(15% 0.011 158.8)",
+          "oklch(26% 0.011 158.8)",
+          "oklch(37% 0.011 158.8)",
+          "oklch(48% 0.011 158.8)",
+          "oklch(59% 0.011 158.8)",
+          "oklch(70% 0.011 158.8)",
+          "oklch(82% 0.011 158.8)",
+          "oklch(95% 0.011 158.8)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Uncoated Paper",
+        "canonical": "#faf8f1",
+        "tonalRamp": [
+          "oklch(15% 0.009 93.6)",
+          "oklch(26% 0.009 93.6)",
+          "oklch(37% 0.009 93.6)",
+          "oklch(48% 0.009 93.6)",
+          "oklch(59% 0.009 93.6)",
+          "oklch(70% 0.009 93.6)",
+          "oklch(82% 0.009 93.6)",
+          "oklch(95% 0.009 93.6)"
+        ]
+      },
+      "paper-soft": {
+        "role": "neutral",
+        "displayName": "Soft Paper",
+        "canonical": "#f0f0e8",
+        "tonalRamp": [
+          "oklch(15% 0.011 106.6)",
+          "oklch(26% 0.011 106.6)",
+          "oklch(37% 0.011 106.6)",
+          "oklch(48% 0.011 106.6)",
+          "oklch(59% 0.011 106.6)",
+          "oklch(70% 0.011 106.6)",
+          "oklch(82% 0.011 106.6)",
+          "oklch(95% 0.011 106.6)"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Deep Green Ink",
+        "canonical": "#18332e",
+        "tonalRamp": [
+          "oklch(15% 0.035 180.5)",
+          "oklch(26% 0.035 180.5)",
+          "oklch(37% 0.035 180.5)",
+          "oklch(48% 0.035 180.5)",
+          "oklch(59% 0.035 180.5)",
+          "oklch(70% 0.035 180.5)",
+          "oklch(82% 0.035 180.5)",
+          "oklch(95% 0.035 180.5)"
+        ]
+      },
+      "ink-soft": {
+        "role": "primary",
+        "displayName": "Soft Green Ink",
+        "canonical": "#456159",
+        "tonalRamp": [
+          "oklch(15% 0.036 175.1)",
+          "oklch(26% 0.036 175.1)",
+          "oklch(37% 0.036 175.1)",
+          "oklch(48% 0.036 175.1)",
+          "oklch(59% 0.036 175.1)",
+          "oklch(70% 0.036 175.1)",
+          "oklch(82% 0.036 175.1)",
+          "oklch(95% 0.036 175.1)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Field Rule",
+        "canonical": "#b5c7bd",
+        "tonalRamp": [
+          "oklch(15% 0.024 161.6)",
+          "oklch(26% 0.024 161.6)",
+          "oklch(37% 0.024 161.6)",
+          "oklch(48% 0.024 161.6)",
+          "oklch(59% 0.024 161.6)",
+          "oklch(70% 0.024 161.6)",
+          "oklch(82% 0.024 161.6)",
+          "oklch(95% 0.024 161.6)"
+        ]
+      },
+      "paper-rule": {
+        "role": "neutral",
+        "displayName": "Paper Rule",
+        "canonical": "#d7ded4",
+        "tonalRamp": [
+          "oklch(15% 0.015 136.1)",
+          "oklch(26% 0.015 136.1)",
+          "oklch(37% 0.015 136.1)",
+          "oklch(48% 0.015 136.1)",
+          "oklch(59% 0.015 136.1)",
+          "oklch(70% 0.015 136.1)",
+          "oklch(82% 0.015 136.1)",
+          "oklch(95% 0.015 136.1)"
+        ]
+      },
+      "seal": {
+        "role": "secondary",
+        "displayName": "Rust Seal",
+        "canonical": "#a34935",
+        "tonalRamp": [
+          "oklch(15% 0.124 33.9)",
+          "oklch(26% 0.124 33.9)",
+          "oklch(37% 0.124 33.9)",
+          "oklch(48% 0.124 33.9)",
+          "oklch(59% 0.124 33.9)",
+          "oklch(70% 0.124 33.9)",
+          "oklch(82% 0.124 33.9)",
+          "oklch(95% 0.124 33.9)"
+        ]
+      },
+      "seal-dark": {
+        "role": "secondary",
+        "displayName": "Dark Rust",
+        "canonical": "#843a29",
+        "tonalRamp": [
+          "oklch(15% 0.106 34.3)",
+          "oklch(26% 0.106 34.3)",
+          "oklch(37% 0.106 34.3)",
+          "oklch(48% 0.106 34.3)",
+          "oklch(59% 0.106 34.3)",
+          "oklch(70% 0.106 34.3)",
+          "oklch(82% 0.106 34.3)",
+          "oklch(95% 0.106 34.3)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing thesis."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page introductions."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Letter headings."
+      },
+      "body-reading": {
+        "displayName": "Body reading",
+        "purpose": "Original post passages."
+      },
+      "body-ui": {
+        "displayName": "Body UI",
+        "purpose": "Controls and explanatory copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels and small prominent actions."
+      }
+    },
+    "shadows": [
+      {
+        "name": "letter-sheet",
+        "value": "0 26px 65px -38px rgba(18, 55, 46, .45)",
+        "purpose": "Separate paper from the sage field."
+      },
+      {
+        "name": "auth-dialog",
+        "value": "0 30px 90px -25px rgba(0, 20, 17, .45)",
+        "purpose": "Lift the modal over its dark backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "background .2s ease, color .2s ease, transform .2s ease",
+        "purpose": "Primary-action hover and active response."
+      },
+      {
+        "name": "sheet-arrive",
+        "value": ".75s cubic-bezier(.19, 1, .22, 1)",
+        "purpose": "One gentle example-sheet arrival."
+      },
+      {
+        "name": "progress-travel",
+        "value": "2.7s ease-in-out infinite alternate",
+        "purpose": "Running-digest progress line."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "narrow-mobile",
+        "value": "390px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main start, save, and digest actions.",
+      "html": "<button class=\"ds-btn-primary\">Make a new digest <svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" width=\"20\" height=\"20\"><path d=\"M4 12h15m-6-6 6 6-6 6\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:50px;border:1px solid var(--ink);border-radius:2px;background:var(--ink);color:var(--paper);padding:10px 22px;font-family:var(--font-ui);font-size:17px;font-weight:600;line-height:1.15;cursor:pointer;transition:background .2s ease,color .2s ease,transform .2s ease}.ds-btn-primary:hover{background:#285249;transform:translateY(-2px)}.ds-btn-primary:active{transform:translateY(0)}.ds-btn-primary:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "Text Action",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Quiet secondary passage or navigation action.",
+      "html": "<button class=\"ds-btn-text\">Open connections</button>",
+      "css": ".ds-btn-text{display:inline-flex;align-items:center;gap:10px;border:0;border-bottom:1px solid currentColor;background:transparent;color:var(--ink);padding:4px 0;font-family:var(--font-ui);font-size:17px;font-weight:600;cursor:pointer}.ds-btn-text:hover{color:var(--seal)}.ds-btn-text:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "Service Row Action",
+      "kind": "button",
+      "refersTo": "button-small",
+      "description": "Connect or disconnect one source in a service row.",
+      "html": "<button class=\"ds-btn-small\">Connect</button>",
+      "css": ".ds-btn-small{min-width:107px;min-height:39px;padding:5px 12px;border:1px solid var(--ink);border-radius:0;background:transparent;color:var(--ink);font-family:var(--font-ui);font-size:17px;font-weight:700;text-align:center;cursor:pointer}.ds-btn-small:hover{background:var(--ink);color:var(--paper)}.ds-btn-small:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "Auth Input",
+      "kind": "input",
+      "refersTo": "input-auth",
+      "description": "Email or password entry within the paper auth dialog.",
+      "html": "<label class=\"ds-input-label\">Email<input class=\"ds-input-auth\" type=\"email\" placeholder=\"you@example.com\"/></label>",
+      "css": ".ds-input-label{display:flex;flex-direction:column;gap:7px;color:var(--ink);font-family:var(--font-ui);font-size:16px;font-weight:700}.ds-input-auth{width:100%;height:46px;padding:8px 13px;border:1px solid var(--rule);border-radius:0;background:var(--paper);color:var(--ink);font-family:var(--font-ui);font-size:17px;outline:none}.ds-input-auth:focus{border-color:var(--ink);box-shadow:inset 0 -2px var(--seal)}.ds-input-auth:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "App Navigation",
+      "kind": "nav",
+      "description": "Digest and Connections destinations with a rust active rule.",
+      "html": "<nav class=\"ds-app-nav\" aria-label=\"Main navigation\"><button class=\"ds-nav-link ds-nav-active\" aria-current=\"page\">Digest</button><button class=\"ds-nav-link\">Connections</button></nav>",
+      "css": ".ds-app-nav{display:flex;align-items:center;gap:32px}.ds-nav-link{min-height:83px;padding:6px 1px 0;border:0;border-bottom:2px solid transparent;background:none;color:var(--ink-soft);font-family:var(--font-ui);font-size:17px;cursor:pointer}.ds-nav-link:hover{color:var(--ink)}.ds-nav-link.ds-nav-active{border-bottom-color:var(--seal);color:var(--ink);font-weight:700}.ds-nav-link:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "Letter Sheet",
+      "kind": "card",
+      "refersTo": "sheet-letter",
+      "description": "Shared paper reading surface for the preview, connections, and digest.",
+      "html": "<section class=\"ds-letter-sheet\"><header class=\"ds-letter-head\"><h2>A little of what matters.</h2><span class=\"ds-letter-seal\" aria-hidden=\"true\">d.</span></header><p class=\"ds-letter-copy\">The useful parts, in one place.</p></section>",
+      "css": ".ds-letter-sheet{background:var(--paper);color:var(--ink);padding:42px;box-shadow:0 26px 65px -38px rgba(18,55,46,.45);font-family:var(--font-ui)}.ds-letter-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:25px;border-bottom:1px solid var(--paper-rule)}.ds-letter-head h2{margin:0;font-family:var(--font-letter);font-size:40px;font-weight:500;line-height:1}.ds-letter-seal{display:grid;place-items:center;flex:none;width:52px;height:52px;border:1px solid var(--seal);border-radius:50%;color:var(--seal);font-family:var(--font-letter);font-size:31px;line-height:1;transform:rotate(-10deg)}.ds-letter-copy{margin:24px 0 0;font-family:var(--font-letter);font-size:21px;line-height:1.34}"
+    },
+    {
+      "name": "Section Selector",
+      "kind": "nav",
+      "refersTo": "section-selector-active",
+      "description": "Persistent passage index for Social and Upcoming events.",
+      "html": "<nav class=\"ds-section-nav\" aria-label=\"Digest sections\"><span class=\"ds-index-title\">In this digest</span><button class=\"ds-index-link ds-index-active\" aria-current=\"true\">Social <span>4</span></button><button class=\"ds-index-link\">Upcoming events <span>2</span></button></nav>",
+      "css": ".ds-section-nav{display:flex;flex-direction:column;gap:4px;width:180px;font-family:var(--font-ui)}.ds-index-title{margin:0 0 13px;color:var(--ink-soft);font-size:14px;font-weight:600}.ds-index-link{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:39px;padding:4px 9px;border:0;border-bottom:1px solid transparent;background:transparent;color:var(--ink-soft);text-align:left;font-family:var(--font-ui);font-size:16px;cursor:pointer}.ds-index-link:hover{color:var(--ink);background:var(--paper-soft)}.ds-index-link.ds-index-active{color:var(--ink);border-bottom-color:var(--seal);background:var(--paper-soft);font-weight:700}.ds-index-link:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "History Letter",
+      "kind": "custom",
+      "description": "Date-led past digest selection in the history rail.",
+      "html": "<button class=\"ds-history-item ds-history-active\" aria-current=\"true\"><span class=\"ds-history-date\">Sep 15, 2026</span><span class=\"ds-history-meta\">Ready to read · 8 posts</span></button>",
+      "css": ".ds-history-item{display:block;width:230px;padding:16px 9px;border:0;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);text-align:left;font-family:var(--font-ui);cursor:pointer}.ds-history-item:hover{background:rgba(250,248,241,.45)}.ds-history-item.ds-history-active{background:var(--paper);box-shadow:inset 0 -2px var(--seal)}.ds-history-date{display:block;font-family:var(--font-letter);font-size:19px;font-weight:600;line-height:1.05}.ds-history-meta{display:block;margin-top:7px;color:var(--ink-soft);font-size:14px}.ds-history-item:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
+    },
+    {
+      "name": "Digest Status",
+      "kind": "chip",
+      "description": "Compact state label in the letter head.",
+      "html": "<span class=\"ds-digest-status ds-status-partial\">Ready with gaps</span>",
+      "css": ".ds-digest-status{display:inline-block;padding:6px 10px;border:1px solid var(--paper-rule);color:var(--ink);font-family:var(--font-ui);font-size:14px;font-weight:700;white-space:nowrap}.ds-status-partial{border-color:var(--seal);color:var(--seal-dark)}.ds-status-completed{border-color:var(--ink);color:var(--ink)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Daily Letter",
+    "overview": "Digest treats social updates as a short letter one can finish. A pale sage field surrounds uncoated paper, with deep green ink, fine rules, dated reading marks, and a restrained rust seal. The letter is the reading surface across the preview, connections, digest history, and authentication.\n\nThe visual voice is editorial and calm. Serif type carries the thesis, letter headings, and post text; sans-serif type carries controls and metadata. Space and rules separate passages. Source images stay compact beside the text, and the main section selector keeps the reader oriented as they move through the letter.",
+    "keyCharacteristics": [
+      "A pale field and warm paper make the finite reading surface unmistakable.",
+      "Green ink does most of the work; rust marks emphasis, selection, and caution.",
+      "Reading text leads, with compact source images alongside it.",
+      "The sheet arrives gently once; sections and image carousels move by user action."
+    ],
+    "rules": [
+      {
+        "name": "The Seal Rule",
+        "body": "Rust marks a meaningful state or a single editorial accent; green ink remains the default voice.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reading Voice Rule",
+        "body": "Use Alegreya for passages and editorial headings; use Alegreya Sans for actions, source labels, navigation, and state.",
+        "section": "typography"
+      },
+      {
+        "name": "The Letter Measure Rule",
+        "body": "Give post text a readable measure before allocating space to images; a post image is secondary and stays compact beside its passage.",
+        "section": "layout"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "Use elevation for the whole sheet or modal, then keep entries and controls flat within it.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do place the finite letter on the sage field for primary reading surfaces.",
+      "Do use rust to identify selection, focus, progress, and caution.",
+      "Do preserve the text-first passage and compact per-post image relationship.",
+      "Do keep section selection visible and tied to the passage in view."
+    ],
+    "donts": [
+      "Don't turn post rows into separately elevated cards.",
+      "Don't enlarge source images until they compete with the text.",
+      "Don't animate the image carousel without user action."
+    ]
+  }
+}
