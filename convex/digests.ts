@@ -8,6 +8,7 @@ import schema, { digestDecisionValidator, serviceValidator } from './schema';
 import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
 import type { Service } from './utilities/sites';
+import { classificationCategoryIds, DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../shared/classificationPrompt';
 
 const MAX_POSTS_PER_SERVICE = 50;
 const MAX_DIGEST_POSTS = 150;
@@ -142,6 +143,10 @@ async function startDigestForUser(
     return null;
   }
 
+  const preferences = userId === null ? null : await ctx.db
+    .query('userPreferences')
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .first();
   const digestId = await ctx.db.insert('digests', {
     userTokenIdentifier,
     status: 'running',
@@ -150,6 +155,7 @@ async function startDigestForUser(
     serviceResults: services.map((service) => ({ service, status: 'pending' as const, postCount: 0 })),
     postCount: 0,
     classificationFallbackCount: 0,
+    classificationPrompt: preferences?.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
     ...(user?.email === undefined ? {} : { recipientEmail: user.email }),
     emailDeliveryStatus: 'pending',
   });
@@ -364,6 +370,7 @@ export const getPostsForClassification = internalQuery({
   args: { digestPostIds: v.array(v.id('digestPosts')) },
   returns: v.object({
     userTokenIdentifier: v.string(),
+    classificationPrompt: v.string(),
     posts: v.array(schema.doc('digestPosts')),
   }),
   handler: async (ctx, { digestPostIds }) => {
@@ -380,7 +387,7 @@ export const getPostsForClassification = internalQuery({
     if (digest === null || digest.status !== 'running') {
       throw new Error('DIGEST_NOT_RUNNING');
     }
-    return { userTokenIdentifier: digest.userTokenIdentifier, posts: existingPosts };
+    return { userTokenIdentifier: digest.userTokenIdentifier, classificationPrompt: digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts: existingPosts };
   },
 });
 
@@ -400,6 +407,10 @@ export const applyClassifications = internalMutation({
     const digest = await ctx.db.get('digests', digestId);
     if (digest === null || digest.status !== 'running') {
       throw new Error('DIGEST_NOT_RUNNING');
+    }
+    const allowedCategories = new Set(classificationCategoryIds(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT));
+    if (classifications.some(({ category }) => !allowedCategories.has(category))) {
+      throw new Error('INVALID_CLASSIFICATION_CATEGORY');
     }
     const posts = await Promise.all(
       classifications.map(async (classification) => {
@@ -515,8 +526,7 @@ export const getDigestEmailPayload = internalQuery({
       .query('digestPosts')
       .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
       .take(MAX_DIGEST_POSTS);
-    const socialPosts = posts.filter(({ category }) => category === 'social').slice(0, MAX_EMAIL_POSTS_PER_CATEGORY);
-    const eventPosts = posts.filter(({ category }) => category === 'event').slice(0, MAX_EMAIL_POSTS_PER_CATEGORY);
+    const sections = digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category));
     const digestUrl = new URL(env.DIGEST_APP_URL);
     digestUrl.searchParams.set('digest', digestId);
     const digestDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(digest._creationTime);
@@ -524,8 +534,7 @@ export const getDigestEmailPayload = internalQuery({
     const preview = [
       `Your digest for ${digestDate} is ready.`,
       `${digest.postCount} posts from ${successfulServices} connected ${successfulServices === 1 ? 'service' : 'services'}.`,
-      formatEmailSection('Social', socialPosts),
-      formatEmailSection('Upcoming events', eventPosts),
+      ...sections.map(({ id, name }) => formatEmailSection(name, posts.filter(({ category }) => category === id).slice(0, MAX_EMAIL_POSTS_PER_CATEGORY))),
       `\nView the full digest: ${digestUrl.toString()}`,
     ]
       .filter((section) => section !== '')

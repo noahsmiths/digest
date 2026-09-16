@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { ArrowIcon } from './Chrome';
 import { serviceName, services, type Service } from './shared';
+import { classificationPromptError, DEFAULT_CLASSIFICATION_PROMPT, parseClassificationPrompt, serializeClassificationPrompt } from '../../shared/classificationPrompt';
 
 type Preferences = {
   automaticDigestEnabled: boolean;
   deliveryTime: string;
   timeZone: string;
+  classificationPrompt: string;
 };
 
 export function SettingsPage({
@@ -21,6 +23,7 @@ export function SettingsPage({
   onDisconnect,
   onSave,
   onSavePreferences,
+  onSaveClassificationPrompt,
   onDigest,
 }: {
   linkedServices: Service[];
@@ -35,6 +38,7 @@ export function SettingsPage({
   onDisconnect: (service: Service) => Promise<void>;
   onSave: () => Promise<void>;
   onSavePreferences: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
+  onSaveClassificationPrompt: (prompt: string) => Promise<void>;
   onDigest: () => void;
 }) {
   return (
@@ -99,6 +103,8 @@ export function SettingsPage({
           </div>
         )}
 
+        <ClassificationSettings prompt={preferences.classificationPrompt} onSave={onSaveClassificationPrompt} />
+
         <DailyDeliverySettings
           key={`${preferences.automaticDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
           preferences={preferences}
@@ -113,6 +119,76 @@ export function SettingsPage({
         </div>
       </section>
     </main>
+  );
+}
+
+function ClassificationSettings({ prompt, onSave }: { prompt: string; onSave: (prompt: string) => Promise<void> }) {
+  const [draft, setDraft] = useState(() => parseClassificationPrompt(prompt));
+  const [savedPrompt, setSavedPrompt] = useState(() => serializeClassificationPrompt(parseClassificationPrompt(prompt)));
+  const [isSaving, setIsSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const serialized = serializeClassificationPrompt(draft);
+  const dirty = serialized !== savedPrompt;
+
+  const updateCategory = (index: number, field: 'name' | 'prompt', value: string) => {
+    setDraft((current) => ({ ...current, categories: current.categories.map((category, categoryIndex) => categoryIndex === index ? { ...category, [field]: value } : category) }));
+    setStatus(null);
+    setError(null);
+  };
+
+  const save = async () => {
+    const parsed = parseClassificationPrompt(serialized);
+    const validationError = classificationPromptError(serialized)
+      ?? (parsed.categories.length !== draft.categories.length || draft.categories.some(({ name, prompt }, index) => parsed.categories[index]?.name !== name.trim() || parsed.categories[index]?.prompt !== prompt.trim()) ? 'Use another heading level inside a rule; “##” is reserved for category names.' : null);
+    if (validationError !== null) { setError(validationError); return; }
+    setIsSaving(true);
+    setError(null);
+    setStatus(null);
+    try {
+      await onSave(serialized);
+      setSavedPrompt(serialized);
+      setStatus('Saved. Your next digest will use these rules.');
+    } catch {
+      setError('Could not save your classification rules. Your edits are still here — try saving again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <section className="classification-settings" aria-labelledby="classification-settings-title">
+      <div className="delivery-settings-heading">
+        <h2 id="classification-settings-title">What makes the cut</h2>
+        <p>Shape your digest with your own categories and rules. Changes apply to new digests, including daily delivery.</p>
+      </div>
+      <fieldset disabled={isSaving} className="classification-fields">
+        <ul className="category-rules">
+          {draft.categories.map((category, index) => (
+            <li className="category-rule" key={index}>
+              <div className="category-rule-head">
+                <label className="prompt-field">
+                  <span>Category name</span>
+                  <input aria-label={`Category ${index + 1} name`} value={category.name} maxLength={80} onChange={(event) => updateCategory(index, 'name', event.target.value)} />
+                </label>
+                <button className="text-action" type="button" aria-label={`Remove ${category.name || 'category'}`} onClick={() => { setDraft({ ...draft, categories: draft.categories.filter((_, categoryIndex) => categoryIndex !== index) }); setStatus(null); }}>Remove</button>
+              </div>
+              <label className="prompt-field">
+                <span>What belongs here</span>
+                <textarea rows={4} value={category.prompt} onChange={(event) => updateCategory(index, 'prompt', event.target.value)} />
+              </label>
+            </li>
+          ))}
+        </ul>
+        <div className="classification-actions">
+          <button className="small-action" type="button" disabled={draft.categories.length >= 30} onClick={() => { setDraft({ ...draft, categories: [...draft.categories, { id: '', name: '', prompt: '' }] }); setStatus(null); }}>Add category</button>
+          <button className="text-action" type="button" onClick={() => { setDraft(parseClassificationPrompt(DEFAULT_CLASSIFICATION_PROMPT)); setError(null); setStatus('Default rules restored. Save to apply them.'); }}>Restore defaults</button>
+          <button className="primary-action" type="button" disabled={!dirty} onClick={() => void save()}>{isSaving ? 'Saving rules…' : 'Save rules'}</button>
+        </div>
+      </fieldset>
+      {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
+      <p className="classification-status" role="status">{status ?? (dirty ? 'Unsaved changes' : '')}</p>
+    </section>
   );
 }
 

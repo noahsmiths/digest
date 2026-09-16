@@ -3,15 +3,9 @@ import { v } from 'convex/values';
 
 export const serviceValidator = v.union(v.literal('instagram'), v.literal('x'), v.literal('linkedin'));
 
-export const digestCategoryValidator = v.union(
-  v.literal('news'),
-  v.literal('social'),
-  v.literal('artists'),
-  v.literal('event'),
-  v.literal('other'),
-);
+export const digestCategoryValidator = v.string();
 
-export const digestDecisionValidator = v.union(v.literal('social'), v.literal('event'), v.literal('drop'));
+export const digestDecisionValidator = v.string();
 
 export const digestStatusValidator = v.union(
   v.literal('running'),
@@ -50,6 +44,7 @@ export default defineSchema({
     deliveryTime: v.string(),
     timeZone: v.string(),
     nextDeliveryAt: v.number(),
+    classificationPrompt: v.optional(v.string()),
   })
     .index('by_userId', ['userId'])
     .index('by_automaticDigestEnabled_and_nextDeliveryAt', ['automaticDigestEnabled', 'nextDeliveryAt']),
@@ -75,6 +70,7 @@ export default defineSchema({
     serviceResults: v.array(digestServiceResultValidator),
     postCount: v.number(),
     classificationFallbackCount: v.number(),
+    classificationPrompt: v.optional(v.string()),
     workflowId: v.optional(v.string()),
     completedAt: v.optional(v.number()),
     failureCode: v.optional(v.string()),

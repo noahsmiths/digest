@@ -1,9 +1,10 @@
 import { useQuery } from 'convex/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { ArrowIcon } from './Chrome';
-import { categories, formatDate, serviceName, statusLabel, type Category, type Service } from './shared';
+import { formatDate, serviceName, statusLabel, type Service } from './shared';
+import { DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../../shared/classificationPrompt';
 
 export type DigestData = NonNullable<ReturnType<typeof useQuery<typeof api.digests.get>>>;
 
@@ -21,7 +22,6 @@ export function DigestPage({
   loadMore,
   currentDigestId,
   selectedDigest,
-  groupedPosts,
   activeDigest,
   isStartingDigest,
   error,
@@ -35,7 +35,6 @@ export function DigestPage({
   loadMore: (numItems: number) => void;
   currentDigestId: Id<'digests'> | null;
   selectedDigest: DigestData | null | undefined;
-  groupedPosts: Record<Category, DigestData['posts']>;
   activeDigest: HistoryItem | undefined;
   isStartingDigest: boolean;
   error: string | null;
@@ -123,7 +122,7 @@ export function DigestPage({
           ) : selectedDigest === null ? (
             <div className="digest-empty">This digest is unavailable. Choose another from your history.</div>
           ) : (
-            <DigestDetail digest={selectedDigest.digest} groupedPosts={groupedPosts} />
+            <DigestDetail key={selectedDigest.digest._id} digest={selectedDigest.digest} posts={selectedDigest.posts} />
           )}
         </section>
       </div>
@@ -131,33 +130,35 @@ export function DigestPage({
   );
 }
 
-function DigestDetail({ digest, groupedPosts }: { digest: DigestData['digest']; groupedPosts: Record<Category, DigestData['posts']> }) {
-  const [activeCategory, setActiveCategory] = useState<Category>('social');
+function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: DigestData['posts'] }) {
+  const categories = useMemo(() => digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category)), [digest.classificationPrompt, posts]);
+  const groupedPosts = useMemo(() => Object.fromEntries(categories.map(({ id }) => [id, posts.filter(({ category }) => category === id)])), [categories, posts]);
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
   const failedServices = digest.serviceResults.filter(({ status }) => status === 'failed');
   const completedServices = digest.serviceResults.filter(({ status }) => status !== 'pending').length;
 
   useEffect(() => {
-    if (digest.status !== 'completed' && digest.status !== 'partial') return;
+    if ((digest.status !== 'completed' && digest.status !== 'partial') || categories.length === 0) return;
     const updateActiveSection = () => {
       if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 40) {
         setActiveCategory(categories[categories.length - 1].id);
         return;
       }
       const boundary = window.innerHeight * 0.38;
-      const current = categories.reduce<Category>((selected, category) => {
-        const top = document.getElementById(`digest-${category.id}`)?.getBoundingClientRect().top;
+      const current = categories.reduce<string>((selected, category) => {
+        const top = document.getElementById(`digest-${encodeURIComponent(category.id)}`)?.getBoundingClientRect().top;
         return top !== undefined && top <= boundary ? category.id : selected;
-      }, 'social');
+      }, categories[0].id);
       setActiveCategory(current);
     };
     window.addEventListener('scroll', updateActiveSection, { passive: true });
     updateActiveSection();
     return () => window.removeEventListener('scroll', updateActiveSection);
-  }, [digest._id, digest.status]);
+  }, [digest._id, digest.status, categories]);
 
-  const chooseCategory = (category: Category) => {
+  const chooseCategory = (category: string) => {
     setActiveCategory(category);
-    document.getElementById(`digest-${category}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(`digest-${encodeURIComponent(category)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
@@ -199,10 +200,10 @@ function DigestDetail({ digest, groupedPosts }: { digest: DigestData['digest']; 
 
           <div className="digest-passages">
             {categories.map((category) => (
-              <section className="digest-section" id={`digest-${category.id}`} key={category.id}>
+              <section className="digest-section" id={`digest-${encodeURIComponent(category.id)}`} key={category.id}>
                 <div className="digest-section-heading">
                   <h3>{category.name}</h3>
-                  <p>{category.description} · {groupedPosts[category.id].length} {groupedPosts[category.id].length === 1 ? 'post' : 'posts'}</p>
+                  <p>{groupedPosts[category.id].length} {groupedPosts[category.id].length === 1 ? 'post' : 'posts'}</p>
                 </div>
                 {groupedPosts[category.id].length === 0 ? (
                   <p className="section-empty">Nothing in this section this time.</p>

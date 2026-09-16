@@ -160,6 +160,7 @@ export const classifyPosts = internalAction({
       classificationContext.userTokenIdentifier,
       classificationContext.posts,
       openai.chat('gpt-5'),
+      classificationContext.classificationPrompt,
     );
   },
 });

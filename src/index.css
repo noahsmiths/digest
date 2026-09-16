@@ -18,7 +18,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--field); color: var(--ink); font-family: var(--font-ui); font-size: 17px; }
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
 img { display: block; max-width: 100%; }
@@ -134,6 +134,21 @@ svg { display: block; }
 .delivery-time-field input:focus { border-color: var(--ink); outline: 3px solid var(--seal); outline-offset: 3px; }
 .delivery-time-field input:disabled { opacity: .48; }
 .delivery-time-field small { grid-column: 1 / -1; }
+.classification-settings { margin-top: 36px; padding-top: 30px; border-top: 1px solid var(--ink); }
+.classification-fields { min-width: 0; margin: 24px 0 0; padding: 0; border: 0; }
+.prompt-field { display: grid; min-width: 0; gap: 7px; }
+.prompt-field > span { font-size: 16px; font-weight: 700; }
+.prompt-field input, .prompt-field textarea { width: 100%; padding: 10px 13px; border: 1px solid var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); caret-color: var(--seal); }
+.prompt-field textarea { min-height: 90px; resize: vertical; line-height: 1.4; }
+.prompt-field input:focus, .prompt-field textarea:focus { border-color: var(--ink); outline: 3px solid var(--seal); outline-offset: 3px; }
+.classification-fields:disabled { opacity: .65; }
+.category-rules { list-style: none; margin: 24px 0; padding: 0; }
+.category-rule { display: grid; gap: 16px; padding: 24px 0; border-top: 1px solid var(--paper-rule); }
+.category-rule-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.category-rule-head .prompt-field { width: min(100%, 360px); }
+.classification-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.classification-actions .primary-action { margin-left: auto; }
+.classification-status { min-height: 1.4em; margin: 14px 0 0; color: var(--ink-soft); font-size: 15px; }
 
 .digest-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 38px; }
 .digest-heading .primary-action { margin-bottom: 3px; }
@@ -265,6 +280,7 @@ svg { display: block; }
   .service-action { width: 100%; justify-content: space-between; }
   .settings-sheet-foot { flex-direction: column; align-items: flex-start; }
   .delivery-settings { grid-template-columns: 1fr; gap: 22px; }
+  .classification-actions .primary-action { width: 100%; margin-left: 0; }
   .delivery-time-field { width: 100%; grid-template-columns: 1fr 120px; }
   .digest-heading { align-items: flex-start; flex-direction: column; gap: 13px; margin-bottom: 17px; }
   .digest-heading h1 { font-size: 42px; margin-bottom: 0; }

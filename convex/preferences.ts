@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { internal } from './_generated/api';
 import { internalMutation, mutation, query } from './_generated/server';
 import { getIdentityOrThrow } from './utilities/auth';
+import { classificationPromptError, DEFAULT_CLASSIFICATION_PROMPT } from '../shared/classificationPrompt';
 
 const DEFAULT_DELIVERY_TIME = '08:00';
 const DEFAULT_TIME_ZONE = 'UTC';
@@ -11,6 +12,7 @@ const preferencesValidator = v.object({
   automaticDigestEnabled: v.boolean(),
   deliveryTime: v.string(),
   timeZone: v.string(),
+  classificationPrompt: v.string(),
 });
 
 function parseDeliveryTime(deliveryTime: string) {
@@ -73,11 +75,12 @@ export const get = query({
       .withIndex('by_userId', (q) => q.eq('userId', userId))
       .first();
     return preferences === null
-      ? { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone: DEFAULT_TIME_ZONE }
+      ? { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone: DEFAULT_TIME_ZONE, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT }
       : {
           automaticDigestEnabled: preferences.automaticDigestEnabled,
           deliveryTime: preferences.deliveryTime,
           timeZone: preferences.timeZone,
+          classificationPrompt: preferences.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
         };
   },
 });
@@ -99,18 +102,21 @@ export const ensure = mutation({
         await ctx.db.patch('userPreferences', existing._id, {
           userTokenIdentifier: identity.tokenIdentifier,
           timeZone,
+          classificationPrompt: existing.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
           nextDeliveryAt: next,
         });
         return {
           automaticDigestEnabled: existing.automaticDigestEnabled,
           deliveryTime: existing.deliveryTime,
           timeZone,
+          classificationPrompt: existing.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
         };
       }
       return {
         automaticDigestEnabled: existing.automaticDigestEnabled,
         deliveryTime: existing.deliveryTime,
         timeZone: existing.timeZone,
+        classificationPrompt: existing.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
       };
     }
     const next = nextDeliveryAt(DEFAULT_DELIVERY_TIME, timeZone);
@@ -122,12 +128,12 @@ export const ensure = mutation({
       timeZone,
       nextDeliveryAt: next,
     });
-    return { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone };
+    return { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT };
   },
 });
 
 export const update = mutation({
-  args: preferencesValidator,
+  args: preferencesValidator.omit('classificationPrompt'),
   returns: v.null(),
   handler: async (ctx, { automaticDigestEnabled, deliveryTime, timeZone }) => {
     const identity = await getIdentityOrThrow(ctx);
@@ -149,7 +155,34 @@ export const update = mutation({
     if (existing === null) {
       await ctx.db.insert('userPreferences', value);
     } else {
-      await ctx.db.replace('userPreferences', existing._id, value);
+      await ctx.db.patch('userPreferences', existing._id, value);
+    }
+    return null;
+  },
+});
+
+export const updateClassificationPrompt = mutation({
+  args: { classificationPrompt: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { classificationPrompt }) => {
+    const identity = await getIdentityOrThrow(ctx);
+    const userId = ctx.db.normalizeId('users', identity.subject);
+    if (userId === null) throw new Error('USER_NOT_FOUND');
+    const error = classificationPromptError(classificationPrompt);
+    if (error !== null) throw new Error(error);
+    const existing = await ctx.db.query('userPreferences').withIndex('by_userId', (q) => q.eq('userId', userId)).first();
+    if (existing === null) {
+      await ctx.db.insert('userPreferences', {
+        userId,
+        userTokenIdentifier: identity.tokenIdentifier,
+        automaticDigestEnabled: true,
+        deliveryTime: DEFAULT_DELIVERY_TIME,
+        timeZone: DEFAULT_TIME_ZONE,
+        nextDeliveryAt: nextDeliveryAt(DEFAULT_DELIVERY_TIME, DEFAULT_TIME_ZONE),
+        classificationPrompt,
+      });
+    } else {
+      await ctx.db.patch('userPreferences', existing._id, { classificationPrompt });
     }
     return null;
   },

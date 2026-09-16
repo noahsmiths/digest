@@ -1,13 +1,13 @@
 import { Authenticated, Unauthenticated, useAction, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../convex/_generated/api';
 import type { Id } from '../convex/_generated/dataModel';
 import { AuthButton } from './auth/AuthForm';
-import { DigestPage, type DigestData } from './ui/DigestPage';
+import { DigestPage } from './ui/DigestPage';
 import { LandingPage } from './ui/LandingPage';
 import { SettingsPage } from './ui/SettingsPage';
 import { Brand } from './ui/Chrome';
-import { serviceName, type Category, type Page, type Service } from './ui/shared';
+import { serviceName, type Page, type Service } from './ui/shared';
 
 export default function App() {
   return (
@@ -37,6 +37,7 @@ function SignedInApp() {
   const preferences = useQuery(api.preferences.get);
   const ensurePreferences = useMutation(api.preferences.ensure);
   const updatePreferences = useMutation(api.preferences.update);
+  const updateClassificationPrompt = useMutation(api.preferences.updateClassificationPrompt);
 
   const [pageOverride, setPageOverride] = useState<Page | null>(readPageFromURL);
   const [selectedDigestId, setSelectedDigestId] = useState<Id<'digests'> | null>(
@@ -71,14 +72,6 @@ function SignedInApp() {
   const currentDigestId = selectedDigestId ?? digests[0]?._id ?? null;
   const selectedDigest = useQuery(api.digests.get, currentDigestId === null ? 'skip' : { digestId: currentDigestId });
   const activeDigest = digests.find(({ status }) => status === 'running');
-  const groupedPosts = useMemo(() => {
-    const grouped: Record<Category, DigestData['posts']> = { social: [], event: [] };
-    if (selectedDigest === undefined || selectedDigest === null) return grouped;
-    for (const post of selectedDigest.posts) {
-      if (post.category === 'social' || post.category === 'event') grouped[post.category].push(post);
-    }
-    return grouped;
-  }, [selectedDigest]);
 
   const navigate = (nextPage: Page, digestId: Id<'digests'> | null = null) => {
     setPageOverride(nextPage);
@@ -191,6 +184,7 @@ function SignedInApp() {
           onDisconnect={disconnectFromService}
           onSave={saveLogin}
           onSavePreferences={savePreferences}
+          onSaveClassificationPrompt={async (classificationPrompt) => { await updateClassificationPrompt({ classificationPrompt }); }}
           onDigest={() => navigate('digest')}
         />
       ) : (
@@ -201,7 +195,6 @@ function SignedInApp() {
           loadMore={loadMore}
           currentDigestId={currentDigestId}
           selectedDigest={selectedDigest}
-          groupedPosts={groupedPosts}
           activeDigest={activeDigest}
           isStartingDigest={isStartingDigest}
           error={error}
