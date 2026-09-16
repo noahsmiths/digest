@@ -25,6 +25,18 @@ GitHub sign-in additionally requires a GitHub OAuth app whose callback URL is
 `<CONVEX_SITE_URL>/oauth/github/callback`, plus `AUTH_GITHUB_CLIENT_ID` and
 `AUTH_GITHUB_CLIENT_SECRET` in the Convex deployment environment.
 
+## Digest email
+
+Digest completion queues a compact email through AgentMail, with a link to the
+full digest in the web app. Configure the AgentMail API key, a sending inbox,
+and the public URL where this app is hosted:
+
+```
+npx convex env set AGENTMAIL_API_KEY <agentmail-api-key>
+npx convex env set AGENTMAIL_INBOX_ID <agentmail-inbox-id>
+npx convex env set DIGEST_APP_URL https://your-digest-app.example
+```
+
 ## Learn more
 
 To learn more about developing your project with Convex, check out:

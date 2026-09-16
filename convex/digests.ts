@@ -1,9 +1,9 @@
-import { cleanup, type WorkflowId, vResultValidator, vWorkflowId, start as startWorkflow } from '@convex-dev/workflow';
+import { cancel as cancelWorkflow, cleanup, type WorkflowId, vResultValidator, vWorkflowId, start as startWorkflow } from '@convex-dev/workflow';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
-import { v } from 'convex/values';
+import { v, type Infer } from 'convex/values';
 import { components, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
-import { internalMutation, internalQuery, mutation, query } from './_generated/server';
+import { env, internalMutation, internalQuery, mutation, query } from './_generated/server';
 import schema, { digestDecisionValidator, serviceValidator } from './schema';
 import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
@@ -11,7 +11,23 @@ import type { Service } from './utilities/sites';
 
 const MAX_POSTS_PER_SERVICE = 50;
 const MAX_DIGEST_POSTS = 150;
+const MAX_EMAIL_POSTS_PER_CATEGORY = 3;
+const MAX_EMAIL_POST_LENGTH = 180;
 const serviceOrder: Service[] = ['instagram', 'x', 'linkedin'];
+
+const digestEmailPayloadValidator = v.union(
+  v.object({
+    kind: v.literal('send'),
+    inboxId: v.string(),
+    to: v.string(),
+    subject: v.string(),
+    text: v.string(),
+    idempotencyKey: v.string(),
+  }),
+  v.object({ kind: v.literal('skip'), failureCode: v.string() }),
+);
+
+type DigestEmailPayload = Infer<typeof digestEmailPayloadValidator>;
 
 const digestPostViewValidator = schema
   .doc('digestPosts')
@@ -81,6 +97,8 @@ export const start = mutation({
   returns: v.id('digests'),
   handler: async (ctx): Promise<Id<'digests'>> => {
     const identity = await getIdentityOrThrow(ctx);
+    const userId = ctx.db.normalizeId('users', identity.subject);
+    const user = userId === null ? null : await ctx.db.get('users', userId);
     const activeDigest = await ctx.db
       .query('digests')
       .withIndex('by_userTokenIdentifier_and_status', (q) =>
@@ -109,6 +127,8 @@ export const start = mutation({
       serviceResults: services.map((service) => ({ service, status: 'pending' as const, postCount: 0 })),
       postCount: 0,
       classificationFallbackCount: 0,
+      ...(user?.email === undefined ? {} : { recipientEmail: user.email }),
+      emailDeliveryStatus: 'pending',
     });
     const workflowId: WorkflowId = await startWorkflow(
       ctx,
@@ -122,6 +142,18 @@ export const start = mutation({
     );
     await ctx.db.patch('digests', digestId, { workflowId });
     return digestId;
+  },
+});
+
+export const cancelRunning = internalMutation({
+  args: { digestId: v.id('digests') },
+  returns: v.null(),
+  handler: async (ctx, { digestId }) => {
+    const digest = await ctx.db.get('digests', digestId);
+    if (digest?.status === 'running' && digest.workflowId) {
+      await cancelWorkflow(ctx, components.workflow, digest.workflowId as WorkflowId);
+    }
+    return null;
   },
 });
 
@@ -364,9 +396,7 @@ export const applyClassifications = internalMutation({
       .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
       .take(MAX_DIGEST_POSTS);
     const retainedStorageIds = new Set(
-      remainingPosts
-        .filter((post) => !droppedPostIds.has(post._id))
-        .flatMap((post) => post.imageStorageIds),
+      remainingPosts.filter((post) => !droppedPostIds.has(post._id)).flatMap((post) => post.imageStorageIds),
     );
     const storageIdsToDelete = new Set<Id<'_storage'>>();
     for (const { classification, post } of posts) {
@@ -407,6 +437,10 @@ export const finalize = internalMutation({
     }
     const successfulServices = digest.serviceResults.filter(({ status }) => status === 'succeeded').length;
     if (successfulServices === 0) {
+      console.error('[digest] all services failed', {
+        digestId,
+        results: digest.serviceResults.map(({ service, errorCode }) => ({ service, errorCode })),
+      });
       await ctx.db.patch('digests', digestId, {
         status: 'failed',
         stage: 'done',
@@ -426,6 +460,101 @@ export const finalize = internalMutation({
   },
 });
 
+function truncateEmailPost(body: string) {
+  const normalized = body.replace(/\s+/g, ' ').trim();
+  return normalized.length <= MAX_EMAIL_POST_LENGTH
+    ? normalized
+    : `${normalized.slice(0, MAX_EMAIL_POST_LENGTH - 1).trimEnd()}…`;
+}
+
+function formatEmailSection(title: string, posts: Array<{ author: string; body: string; service: Service }>) {
+  if (posts.length === 0) return '';
+  return `\n${title}\n${posts
+    .map(({ author, body, service }) => `• ${author} on ${service}: ${truncateEmailPost(body) || 'Shared a post.'}`)
+    .join('\n')}`;
+}
+
+export const getDigestEmailPayload = internalQuery({
+  args: { digestId: v.id('digests') },
+  returns: digestEmailPayloadValidator,
+  handler: async (ctx, { digestId }): Promise<DigestEmailPayload> => {
+    const digest = await ctx.db.get('digests', digestId);
+    if (digest === null || (digest.status !== 'completed' && digest.status !== 'partial')) {
+      return { kind: 'skip', failureCode: 'DIGEST_NOT_READY' };
+    }
+    if (digest.recipientEmail === undefined) {
+      return { kind: 'skip', failureCode: 'NO_RECIPIENT_EMAIL' };
+    }
+    if (env.AGENTMAIL_INBOX_ID === undefined || env.DIGEST_APP_URL === undefined) {
+      return { kind: 'skip', failureCode: 'EMAIL_NOT_CONFIGURED' };
+    }
+
+    const posts = await ctx.db
+      .query('digestPosts')
+      .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
+      .take(MAX_DIGEST_POSTS);
+    const socialPosts = posts.filter(({ category }) => category === 'social').slice(0, MAX_EMAIL_POSTS_PER_CATEGORY);
+    const eventPosts = posts.filter(({ category }) => category === 'event').slice(0, MAX_EMAIL_POSTS_PER_CATEGORY);
+    const digestUrl = new URL(env.DIGEST_APP_URL);
+    digestUrl.searchParams.set('digest', digestId);
+    const digestDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(digest._creationTime);
+    const successfulServices = digest.serviceResults.filter(({ status }) => status === 'succeeded').length;
+    const preview = [
+      `Your digest for ${digestDate} is ready.`,
+      `${digest.postCount} posts from ${successfulServices} connected ${successfulServices === 1 ? 'service' : 'services'}.`,
+      formatEmailSection('Social', socialPosts),
+      formatEmailSection('Upcoming events', eventPosts),
+      `\nView the full digest: ${digestUrl.toString()}`,
+    ]
+      .filter((section) => section !== '')
+      .join('\n');
+    return {
+      kind: 'send',
+      inboxId: env.AGENTMAIL_INBOX_ID,
+      to: digest.recipientEmail,
+      subject: `Your Digest — ${digestDate}`,
+      text: preview,
+      idempotencyKey: digestId,
+    };
+  },
+});
+
+export const markDigestEmailSkipped = internalMutation({
+  args: { digestId: v.id('digests'), failureCode: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { digestId, failureCode }) => {
+    await ctx.db.patch('digests', digestId, {
+      emailDeliveryStatus: 'skipped',
+      emailFailureCode: failureCode,
+    });
+    return null;
+  },
+});
+
+export const markDigestEmailSent = internalMutation({
+  args: { digestId: v.id('digests'), messageId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { digestId, messageId }) => {
+    await ctx.db.patch('digests', digestId, {
+      emailDeliveryStatus: 'sent',
+      emailOutboundId: messageId,
+    });
+    return null;
+  },
+});
+
+export const markDigestEmailFailed = internalMutation({
+  args: { digestId: v.id('digests') },
+  returns: v.null(),
+  handler: async (ctx, { digestId }) => {
+    await ctx.db.patch('digests', digestId, {
+      emailDeliveryStatus: 'failed',
+      emailFailureCode: 'EMAIL_SEND_FAILED',
+    });
+    return null;
+  },
+});
+
 export const handleWorkflowComplete = internalMutation({
   args: {
     workflowId: vWorkflowId,
@@ -436,6 +565,7 @@ export const handleWorkflowComplete = internalMutation({
   handler: async (ctx, { workflowId, result, context }) => {
     const digest = await ctx.db.get('digests', context.digestId);
     if (digest !== null && digest.status === 'running') {
+      console.error('[digest] workflow did not complete', { digestId: context.digestId, resultKind: result.kind });
       await ctx.db.patch('digests', context.digestId, {
         status: 'failed',
         stage: 'done',

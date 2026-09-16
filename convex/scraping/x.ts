@@ -39,9 +39,11 @@ function stringAtObject(value: unknown, key: string) {
 function xMutual(tweet: Record<string, unknown>): boolean | undefined {
   const user = object(path(tweet, ['core', 'user_results', 'result']));
   const legacyUser = object(user?.legacy);
-  const following = user?.following ?? legacyUser?.following;
-  const followedBy = user?.followed_by ?? legacyUser?.followed_by;
-  return typeof following === 'boolean' && typeof followedBy === 'boolean' ? following && followedBy : undefined;
+  const perspectives = object(user?.relationship_perspectives);
+  const following = perspectives?.following ?? user?.following ?? legacyUser?.following;
+  const followedBy = perspectives?.followed_by ?? user?.followed_by ?? legacyUser?.followed_by;
+  if (following === false || followedBy === false) return false;
+  return following === true && followedBy === true ? true : undefined;
 }
 
 function normalizeTweet(value: unknown): RawPost | null {

@@ -20,6 +20,8 @@
     "@convex-dev/auth": "^2.0.0-alpha.1",
     "@convex-dev/workflow": "^0.4.7",
     "@convex-dev/workpool": "^0.4.12",
+    "@x402/fetch": "^2.25.0",
+    "agentmail": "^0.5.23",
     "ai": "^7.0.99",
     "convex": "^1.44.0",
     "convex-helpers": "^0.1.124",

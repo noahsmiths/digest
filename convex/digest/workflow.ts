@@ -3,6 +3,7 @@ import { v, type Infer } from 'convex/values';
 import { components, internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { digestDecisionValidator } from '../schema';
+import { errorDetails } from './diagnostics';
 
 const CLASSIFICATION_BATCH_SIZE = 10;
 const RETRY_BEHAVIOR = { maxAttempts: 3, initialBackoffMs: 1_000, base: 2 } as const;
@@ -67,6 +68,7 @@ export const runDigest = workflow.define({
         }
       }
     } catch (error) {
+      console.error('[digest] scrape step failed', { digestId, services: state.services, error: errorDetails(error) });
       for (const service of state.services) {
         await step.runMutation(
           internal.digests.recordServiceFailure,
@@ -92,7 +94,8 @@ export const runDigest = workflow.define({
             { name: `classify-${index}`, retry: RETRY_BEHAVIOR },
           );
           return { source: 'llm', classifications };
-        } catch {
+        } catch (error) {
+          console.error('[digest] classification batch failed', { digestId, batch: index, error: errorDetails(error) });
           return {
             source: 'fallback',
             classifications: batch.map((digestPostId) => ({ digestPostId, category: 'drop' })),
@@ -109,5 +112,10 @@ export const runDigest = workflow.define({
       );
     }
     await step.runMutation(internal.digests.finalize, { digestId }, { name: 'finalize-digest' });
+    await step.runAction(
+      internal.digest.email.sendDigestEmail,
+      { digestId },
+      { name: 'send-digest-email', retry: RETRY_BEHAVIOR },
+    );
   },
 });

@@ -15,6 +15,9 @@ const app = defineApp({
     AUTH_GITHUB_CLIENT_SECRET: v.string(),
     FIRECRAWL_API_KEY: v.string(),
     OPENAI_API_KEY: v.string(),
+    AGENTMAIL_API_KEY: v.string(),
+    AGENTMAIL_INBOX_ID: v.string(),
+    DIGEST_APP_URL: v.string(),
   },
 });
 

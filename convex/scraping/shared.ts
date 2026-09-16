@@ -81,18 +81,33 @@ async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts
 }
 
 async function openBrowserSession(firecrawl: Firecrawl, profileName: string) {
-  for (let attempt = 0; ; attempt += 1) {
+  let writeAttempts = 0;
+  let rateRetries = 0;
+  for (;;) {
     try {
       return await firecrawl.browser({
-        ttl: 300,
-        activityTtl: 120,
-        profile: { name: profileName, saveChanges: true },
+        ttl: 600,
+        activityTtl: 600,
+        profile: { name: profileName, saveChanges: false },
       });
     } catch (error) {
-      const retryable =
-        error instanceof Error && /another session is currently writing|rate limit exceeded/i.test(error.message);
-      const delay = SESSION_RETRY_DELAYS[attempt];
-      if (!retryable || delay === undefined) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+      let delay: number | undefined;
+      if (/rate limit exceeded/i.test(error.message)) {
+        if (rateRetries > 0) {
+          throw new Error('FIRECRAWL_RATE_LIMITED');
+        }
+        rateRetries += 1;
+        const retryAfter = /retry after (\d+)s/i.exec(error.message);
+        delay = retryAfter ? (Number(retryAfter[1]) + 1) * 1_000 : 60_000;
+        console.warn('[digest] Firecrawl browser rate limited', { retryAfterSeconds: Math.ceil(delay / 1_000) });
+      } else if (/another session is currently writing/i.test(error.message)) {
+        delay = SESSION_RETRY_DELAYS[writeAttempts];
+        writeAttempts += 1;
+      }
+      if (delay === undefined) {
         throw error;
       }
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -141,7 +156,18 @@ export async function scrapeServiceWithSession(
   validateMaxPosts(maxPosts);
   const rawPosts = await scrape(session, maxPosts + CAPTURE_OVERSCAN);
   const posts = await persistPosts(ctx, session, rawPosts);
+  console.log('[digest] mutual post persistence', {
+    host: new URL(session.page.url()).hostname,
+    rawMutuals: rawPosts.filter((post) => post.isMutual === true).length,
+    persistedMutuals: posts.filter((post) => post.isMutual === true).length,
+    savedMutuals: posts.slice(0, maxPosts).filter((post) => post.isMutual === true).length,
+  });
   if (posts.length < maxPosts) {
+    console.warn('[digest] persisted post threshold not reached', {
+      rawPosts: rawPosts.length,
+      observedPosts: posts.length,
+      expectedPosts: maxPosts,
+    });
     throw new Error('FEED_POST_THRESHOLD_NOT_REACHED');
   }
   return posts.slice(0, maxPosts);
@@ -151,7 +177,7 @@ export async function withBrowserSession<T>(
   firecrawlProfileName: string,
   run: (session: OpenedBrowserSession) => Promise<T>,
 ): Promise<T> {
-  const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
+  const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY, timeoutMs: 20_000, maxRetries: 1 });
   const firecrawlSession = await openBrowserSession(firecrawl, firecrawlProfileName);
   if (!firecrawlSession.id || !firecrawlSession.cdpUrl) {
     throw new Error(`Unable to open Firecrawl browser: ${firecrawlSession.error ?? 'unknown error'}`);
@@ -160,6 +186,7 @@ export async function withBrowserSession<T>(
   let completed = false;
   let browser: Awaited<ReturnType<typeof chromium.connectOverCDP>> | null = null;
   try {
+    console.log('[digest] Firecrawl browser session opened');
     browser = await chromium.connectOverCDP(firecrawlSession.cdpUrl);
     const context = browser.contexts()[0];
     if (context === undefined) {
@@ -171,10 +198,31 @@ export async function withBrowserSession<T>(
     completed = true;
     return result;
   } finally {
-    await browser?.close().catch(() => null);
+    console.log('[digest] Firecrawl browser session closing');
+    if (browser !== null) {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      let timedOut = false;
+      try {
+        await Promise.race([
+          browser.close().catch(() => null),
+          new Promise<void>((resolve) => {
+            timeout = setTimeout(() => {
+              timedOut = true;
+              resolve();
+            }, 10_000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timeout);
+      }
+      if (timedOut) {
+        console.warn('[digest] Firecrawl browser close timed out');
+      }
+    }
     const deleteResult = await firecrawl.deleteBrowser(firecrawlSession.id);
+    console.log('[digest] Firecrawl browser session closed', { success: deleteResult.success });
     if (completed && !deleteResult.success) {
-      throw new Error(`Unable to save and close Firecrawl browser: ${deleteResult.error ?? 'unknown error'}`);
+      throw new Error(`Unable to close Firecrawl browser: ${deleteResult.error ?? 'unknown error'}`);
     }
   }
 }

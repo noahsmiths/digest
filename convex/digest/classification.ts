@@ -17,7 +17,7 @@ const classificationSchema = z.object({
 });
 
 const classifierInstructions = `Keep only social updates and upcoming events. Categorize every supplied post as "social", "event", or "drop".
-Social: personal life updates from friends, such as trips, birthdays, conversations, or community updates. If the post isn't a mutual, do not include it. Only make a decision yourself if it's 'unknown'. This should not include too many career related posts, especially if they are very long.
+Social: personal life updates from friends, such as trips, birthdays, conversations, graduations, or other social events people want to know about. If the post isn't a mutual, definitely do not include it. If the post is from a mutual, it likely should be included. A post MUST be from a mutual to be included here.
 Event: a future meetup, gathering, performance, or other scheduled event with enough concrete timing or planning information to be useful.
 Drop: everything else, including news, general opinions, professional updates, creative work, promotions, and posts that are not clearly social or upcoming events.
 Return exactly one classification for every ordinal. Do not rewrite, summarize, or quote the posts.`;

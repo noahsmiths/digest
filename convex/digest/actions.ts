@@ -3,15 +3,17 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { v } from 'convex/values';
 import { internal } from '../_generated/api';
+import type { Id } from '../_generated/dataModel';
 import { env, internalAction } from '../_generated/server';
 import { digestDecisionValidator, serviceValidator } from '../schema';
 import { scrapeInstagramFeed } from '../scraping/instagram';
 import { scrapeLinkedInFeed } from '../scraping/linkedin';
-import { scrapeServiceWithSession, withBrowserSession } from '../scraping/shared';
+import { runServiceScraperWithProfile } from '../scraping/shared';
 import type { ScrapedPost, ServiceScraper } from '../scraping/types';
 import { scrapeXFeed } from '../scraping/x';
 import type { Service } from '../utilities/sites';
 import { classifyPostsWithModel, type DigestClassification } from './classification';
+import { errorDetails } from './diagnostics';
 
 const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
@@ -38,24 +40,37 @@ type ScrapeContext = {
 function scrapeErrorCode(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('AUTH_REQUIRED')) return 'AUTH_REQUIRED';
+  if (message.includes('FIRECRAWL_RATE_LIMITED')) return 'FIRECRAWL_RATE_LIMITED';
   if (message.includes('FEED_CAPTURE_TIMEOUT')) return 'FEED_CAPTURE_TIMEOUT';
+  if (message.includes('FEED_SCROLL_TIMEOUT')) return 'FEED_SCROLL_TIMEOUT';
+  if (message.includes('FOLLOWER_CAPTURE_TIMEOUT')) return 'FOLLOWER_CAPTURE_TIMEOUT';
   if (message.includes('FEED_POST_THRESHOLD_NOT_REACHED')) return 'POST_THRESHOLD_NOT_REACHED';
   return 'SCRAPE_FAILED';
 }
 
 async function scrapeWithRetries(
-  ctx: Parameters<typeof scrapeServiceWithSession>[0],
-  session: Parameters<typeof scrapeServiceWithSession>[1],
+  ctx: Parameters<typeof runServiceScraperWithProfile>[0],
+  profileName: string,
+  digestId: Id<'digests'>,
+  service: Service,
   maxPosts: number,
   scrape: ServiceScraper,
 ): Promise<ScrapedPost[]> {
   let lastError: unknown = null;
-  for (const delay of SERVICE_RETRY_DELAYS) {
+  for (let index = 0; index < SERVICE_RETRY_DELAYS.length; index += 1) {
     try {
-      return await scrapeServiceWithSession(ctx, session, maxPosts, scrape);
+      return await runServiceScraperWithProfile(ctx, profileName, maxPosts, scrape);
     } catch (error) {
       lastError = error;
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      console.warn('[digest] scrape attempt failed', { digestId, service, attempt: index + 1, error: errorDetails(error) });
+      const errorCode = scrapeErrorCode(error);
+      if (errorCode === 'FIRECRAWL_RATE_LIMITED' || errorCode === 'AUTH_REQUIRED') {
+        throw error;
+      }
+      const delay = index < SERVICE_RETRY_DELAYS.length - 1 ? SERVICE_RETRY_DELAYS[index] : undefined;
+      if (delay !== undefined) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
   }
   throw lastError;
@@ -74,8 +89,14 @@ export const scrapeServicesToDigest = internalAction({
   handler: async (ctx, { digestId, services, maxPosts }): Promise<ServiceScrapeResult[]> => {
     const contexts: ScrapeContext[] = await ctx.runQuery(internal.digests.getScrapeContexts, { digestId });
     const contextsByService = new Map(contexts.map((context) => [context.service, context]));
-    const profileName = contexts.find((context) => context.firecrawlProfileName !== null)?.firecrawlProfileName;
-    if (profileName === undefined || profileName === null) {
+    console.log('[digest] scraping started', {
+      digestId,
+      services,
+      maxPosts,
+      profilesAvailable: contexts.filter((context) => context.firecrawlProfileName !== null).map(({ service }) => service),
+    });
+    if (!contexts.some((context) => context.firecrawlProfileName !== null)) {
+      console.warn('[digest] no browser profile available', { digestId, services });
       return services.map((service) => ({
         service,
         status: 'failed' as const,
@@ -84,23 +105,37 @@ export const scrapeServicesToDigest = internalAction({
       }));
     }
 
-    return await withBrowserSession(profileName, async (session) => {
-      const results: ServiceScrapeResult[] = [];
-      for (const service of services) {
-        if (contextsByService.get(service)?.firecrawlProfileName === null) {
-          results.push({ service, status: 'failed', postCount: 0, errorCode: 'AUTH_REQUIRED' });
-          continue;
-        }
-        try {
-          const posts = await scrapeWithRetries(ctx, session, maxPosts, serviceScrapers[service]);
-          const postCount = await ctx.runMutation(internal.digests.saveScrapedPosts, { digestId, service, posts });
-          results.push({ service, status: 'succeeded', postCount });
-        } catch (error) {
-          results.push({ service, status: 'failed', postCount: 0, errorCode: scrapeErrorCode(error) });
+    const results: ServiceScrapeResult[] = [];
+    for (const service of services) {
+      const serviceProfileName = contextsByService.get(service)?.firecrawlProfileName;
+      if (!serviceProfileName) {
+        console.warn('[digest] service profile unavailable', { digestId, service });
+        results.push({ service, status: 'failed', postCount: 0, errorCode: 'AUTH_REQUIRED' });
+        continue;
+      }
+      try {
+        const posts = await scrapeWithRetries(ctx, serviceProfileName, digestId, service, maxPosts, serviceScrapers[service]);
+        const postCount = await ctx.runMutation(internal.digests.saveScrapedPosts, { digestId, service, posts });
+        console.log('[digest] service scraped', { digestId, service, postCount });
+        results.push({ service, status: 'succeeded', postCount });
+      } catch (error) {
+        console.error('[digest] service scrape failed', { digestId, service, error: errorDetails(error) });
+        const errorCode = scrapeErrorCode(error);
+        results.push({ service, status: 'failed', postCount: 0, errorCode });
+        if (errorCode === 'FIRECRAWL_RATE_LIMITED') {
+          results.push(
+            ...services.slice(results.length).map((remainingService) => ({
+              service: remainingService,
+              status: 'failed' as const,
+              postCount: 0,
+              errorCode,
+            })),
+          );
+          break;
         }
       }
-      return results;
-    });
+    }
+    return results;
   },
 });
 

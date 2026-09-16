@@ -21,6 +21,9 @@ export type RawPost = {
   body: string;
   imageUrls: string[];
   isMutual?: boolean;
+  authorUserId?: string;
+  authorUsername?: string;
+  isFollowing?: boolean;
 };
 
 export type ScrapedPost = {

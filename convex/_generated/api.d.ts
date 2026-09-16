@@ -11,6 +11,8 @@
 import type * as auth from "../auth.js";
 import type * as digest_actions from "../digest/actions.js";
 import type * as digest_classification from "../digest/classification.js";
+import type * as digest_diagnostics from "../digest/diagnostics.js";
+import type * as digest_email from "../digest/email.js";
 import type * as digest_workflow from "../digest/workflow.js";
 import type * as digests from "../digests.js";
 import type * as login from "../login.js";
@@ -36,6 +38,8 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "digest/actions": typeof digest_actions;
   "digest/classification": typeof digest_classification;
+  "digest/diagnostics": typeof digest_diagnostics;
+  "digest/email": typeof digest_email;
   "digest/workflow": typeof digest_workflow;
   digests: typeof digests;
   login: typeof login;

@@ -22,6 +22,14 @@ export const digestStatusValidator = v.union(
 
 export const digestStageValidator = v.union(v.literal('scraping'), v.literal('classifying'), v.literal('done'));
 
+export const digestEmailDeliveryStatusValidator = v.union(
+  v.literal('pending'),
+  v.literal('queued'),
+  v.literal('sent'),
+  v.literal('skipped'),
+  v.literal('failed'),
+);
+
 export const digestServiceResultValidator = v.object({
   service: serviceValidator,
   status: v.union(v.literal('pending'), v.literal('succeeded'), v.literal('failed')),
@@ -60,6 +68,10 @@ export default defineSchema({
     workflowId: v.optional(v.string()),
     completedAt: v.optional(v.number()),
     failureCode: v.optional(v.string()),
+    recipientEmail: v.optional(v.string()),
+    emailDeliveryStatus: v.optional(digestEmailDeliveryStatusValidator),
+    emailOutboundId: v.optional(v.string()),
+    emailFailureCode: v.optional(v.string()),
   })
     .index('by_userTokenIdentifier', ['userTokenIdentifier'])
     .index('by_userTokenIdentifier_and_status', ['userTokenIdentifier', 'status']),

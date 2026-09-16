@@ -8,8 +8,6 @@ import { scrapedPostValidator, type OpenedBrowserSession, type RawPost } from '.
 
 const PAGE_SIZE = 20;
 const MAX_FEED_REQUESTS = 240;
-const SCROLL_DISTANCE = 8_000;
-const SCROLL_PAUSE_MS = 500;
 
 function vectorImageURL(value: unknown): string | null {
   const record = object(value);
@@ -38,6 +36,16 @@ function linkedInImages(update: Record<string, unknown>): string[] {
   return [...new Set(images)];
 }
 
+function linkedInMutual(update: Record<string, unknown>): boolean | undefined {
+  const relationship = object(object(update.actor)?.supplementaryActorInfo);
+  const degree = [string(relationship?.text), string(relationship?.accessibilityText)]
+    .map((value) => value?.match(/\b(1st|2nd|3rd)\b/i)?.[1]?.toLowerCase())
+    .find((value) => value !== undefined);
+  if (degree === '1st') return true;
+  if (degree === '2nd' || degree === '3rd') return false;
+  return undefined;
+}
+
 function normalizeLinkedInUpdate(update: unknown): RawPost | null {
   const record = object(update);
   if (record === null || object(object(object(record.updateMetadata)?.trackingData)?.sponsoredTracking) !== null) {
@@ -50,11 +58,14 @@ function normalizeLinkedInUpdate(update: unknown): RawPost | null {
     return null;
   }
 
+  const isMutual = linkedInMutual(record);
+
   return {
     id,
     author,
     body: firstStringAt(record, [['commentary', 'text', 'text']]) ?? '',
     imageUrls: linkedInImages(record),
+    ...(isMutual === undefined ? {} : { isMutual }),
   };
 }
 
@@ -127,7 +138,8 @@ async function selectRecentFeed(session: OpenedBrowserSession) {
     )
     .catch(() => null);
   await recent.click();
-  await recentRequest;
+  const request = await recentRequest;
+  await request?.response();
 }
 
 export async function scrapeLinkedInFeed(session: OpenedBrowserSession, maxPosts: number): Promise<RawPost[]> {
@@ -144,8 +156,6 @@ export async function scrapeLinkedInFeed(session: OpenedBrowserSession, maxPosts
     posts.size < maxPosts && requests < MAX_FEED_REQUESTS;
     start += PAGE_SIZE, requests += 1
   ) {
-    await session.page.mouse.wheel(0, SCROLL_DISTANCE);
-    await session.page.waitForTimeout(SCROLL_PAUSE_MS);
     const data = await fetchFeedPage(session, start, token);
     for (const post of parseLinkedInResponse(data)) {
       if (hasPostContent(post)) {
@@ -158,6 +168,10 @@ export async function scrapeLinkedInFeed(session: OpenedBrowserSession, maxPosts
     }
   }
   if (posts.size < maxPosts) {
+    console.warn('[digest] LinkedIn feed post threshold not reached', {
+      observedPosts: posts.size,
+      expectedPosts: maxPosts,
+    });
     throw new Error('FEED_POST_THRESHOLD_NOT_REACHED');
   }
   return [...posts.values()].slice(0, maxPosts);

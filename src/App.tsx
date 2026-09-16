@@ -67,7 +67,9 @@ function Content() {
   const loginToService = useAction(api.login.node.startLoginSession);
   const completeLogin = useAction(api.login.node.completeLoginSession);
   const disconnectService = useAction(api.login.node.disconnectService);
-  const [selectedDigestId, setSelectedDigestId] = useState<Id<'digests'> | null>(null);
+  const [selectedDigestId, setSelectedDigestId] = useState<Id<'digests'> | null>(
+    () => new URLSearchParams(window.location.search).get('digest') as Id<'digests'> | null,
+  );
   const [loggingInService, setLoggingInService] = useState<Service | null>(null);
   const [disconnectingService, setDisconnectingService] = useState<Service | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
@@ -364,6 +366,8 @@ function DigestDetail({
 }
 
 function DigestPost({ post }: { post: DigestDetailResult['posts'][number] }) {
+  const [arePhotosExpanded, setArePhotosExpanded] = useState(false);
+
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
       <div className="flex items-center justify-between gap-3">
@@ -372,10 +376,23 @@ function DigestPost({ post }: { post: DigestDetailResult['posts'][number] }) {
       </div>
       {post.body !== '' && <p className="whitespace-pre-wrap text-sm leading-6">{post.body}</p>}
       {post.images.length > 0 && (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {post.images.map((image) => (
-            <img className="max-h-96 w-full rounded-lg object-cover" key={image.storageId} src={image.url} alt="" />
-          ))}
+        <div>
+          <button
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
+            type="button"
+            aria-expanded={arePhotosExpanded}
+            aria-controls={`post-photos-${post._id}`}
+            onClick={() => setArePhotosExpanded((isExpanded) => !isExpanded)}
+          >
+            {arePhotosExpanded ? 'Hide photos' : `Photos (${post.images.length})`}
+          </button>
+          {arePhotosExpanded && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" id={`post-photos-${post._id}`}>
+              {post.images.map((image) => (
+                <img className="max-h-96 w-full rounded-lg object-cover" key={image.storageId} src={image.url} alt="" />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </article>
