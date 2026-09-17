@@ -34,6 +34,8 @@ export const sendDigestEmail = internalAction({
       await ctx.runMutation(internal.digests.markDigestEmailSent, {
         digestId,
         messageId: response.messageId,
+        threadId: response.threadId,
+        inboxId: payload.inboxId,
       });
     } catch (error) {
       await ctx.runMutation(internal.digests.markDigestEmailFailed, { digestId });

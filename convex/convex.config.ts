@@ -17,6 +17,7 @@ const app = defineApp({
     OPENAI_API_KEY: v.string(),
     AGENTMAIL_API_KEY: v.string(),
     AGENTMAIL_INBOX_ID: v.string(),
+    AGENTMAIL_WEBHOOK_SECRET: v.optional(v.string()),
     DIGEST_APP_URL: v.string(),
   },
 });

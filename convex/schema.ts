@@ -47,6 +47,7 @@ export default defineSchema({
     classificationPrompt: v.optional(v.string()),
   })
     .index('by_userId', ['userId'])
+    .index('by_userTokenIdentifier', ['userTokenIdentifier'])
     .index('by_automaticDigestEnabled_and_nextDeliveryAt', ['automaticDigestEnabled', 'nextDeliveryAt']),
   linkedServices: defineTable({
     userTokenIdentifier: v.string(),
@@ -77,10 +78,31 @@ export default defineSchema({
     recipientEmail: v.optional(v.string()),
     emailDeliveryStatus: v.optional(digestEmailDeliveryStatusValidator),
     emailOutboundId: v.optional(v.string()),
+    emailThreadId: v.optional(v.string()),
+    emailInboxId: v.optional(v.string()),
     emailFailureCode: v.optional(v.string()),
   })
     .index('by_userTokenIdentifier', ['userTokenIdentifier'])
-    .index('by_userTokenIdentifier_and_status', ['userTokenIdentifier', 'status']),
+    .index('by_userTokenIdentifier_and_status', ['userTokenIdentifier', 'status'])
+    .index('by_emailOutboundId', ['emailOutboundId']),
+  emailPreferenceReplies: defineTable({
+    digestId: v.id('digests'),
+    preferencesId: v.id('userPreferences'),
+    inboxId: v.string(),
+    messageId: v.string(),
+    eventId: v.string(),
+    threadId: v.string(),
+    senderEmail: v.string(),
+    agentThreadId: v.string(),
+    status: v.union(v.literal('pending'), v.literal('applied'), v.literal('unchanged'), v.literal('ignored'), v.literal('failed')),
+    directives: v.optional(v.string()),
+    previousPrompt: v.optional(v.string()),
+    updatedPrompt: v.optional(v.string()),
+    confirmationText: v.optional(v.string()),
+    confirmationMessageId: v.optional(v.string()),
+    failureCode: v.optional(v.string()),
+    workflowId: v.optional(v.string()),
+  }).index('by_inboxId_and_messageId', ['inboxId', 'messageId']),
   digestPosts: defineTable({
     digestId: v.id('digests'),
     service: serviceValidator,

@@ -32,6 +32,7 @@ type Env = {
   readonly CONVEX_SITE_URL: string;
   readonly AGENTMAIL_API_KEY: string;
   readonly AGENTMAIL_INBOX_ID: string;
+  readonly AGENTMAIL_WEBHOOK_SECRET: string | undefined;
   readonly AUTH_GITHUB_CLIENT_ID: string;
   readonly AUTH_GITHUB_CLIENT_SECRET: string;
   readonly AUTH_JWKS: string;

@@ -536,6 +536,7 @@ export const getDigestEmailPayload = internalQuery({
       `${digest.postCount} posts from ${successfulServices} connected ${successfulServices === 1 ? 'service' : 'services'}.`,
       ...sections.map(({ id, name }) => formatEmailSection(name, posts.filter(({ category }) => category === id).slice(0, MAX_EMAIL_POSTS_PER_CATEGORY))),
       `\nView the full digest: ${digestUrl.toString()}`,
+      '\nWant different categories or rules? Reply to this email with what you would like to change. Your next digest will use your updated preferences.',
     ]
       .filter((section) => section !== '')
       .join('\n');
@@ -563,12 +564,14 @@ export const markDigestEmailSkipped = internalMutation({
 });
 
 export const markDigestEmailSent = internalMutation({
-  args: { digestId: v.id('digests'), messageId: v.string() },
+  args: { digestId: v.id('digests'), messageId: v.string(), threadId: v.optional(v.string()), inboxId: v.optional(v.string()) },
   returns: v.null(),
-  handler: async (ctx, { digestId, messageId }) => {
+  handler: async (ctx, { digestId, messageId, threadId, inboxId }) => {
     await ctx.db.patch('digests', digestId, {
       emailDeliveryStatus: 'sent',
       emailOutboundId: messageId,
+      ...(threadId === undefined ? {} : { emailThreadId: threadId }),
+      ...(inboxId === undefined ? {} : { emailInboxId: inboxId }),
     });
     return null;
   },
