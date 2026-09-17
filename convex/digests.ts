@@ -9,6 +9,7 @@ import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
 import type { Service } from './utilities/sites';
 import { classificationCategoryIds, DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../shared/classificationPrompt';
+import { digestPath } from '../shared/routes';
 
 const MAX_POSTS_PER_SERVICE = 50;
 const MAX_DIGEST_POSTS = 150;
@@ -56,7 +57,7 @@ export const list = query({
 });
 
 export const get = query({
-  args: { digestId: v.id('digests') },
+  args: { digestId: v.string() },
   returns: v.union(
     v.object({
       digest: schema.doc('digests'),
@@ -64,8 +65,10 @@ export const get = query({
     }),
     v.null(),
   ),
-  handler: async (ctx, { digestId }) => {
+  handler: async (ctx, { digestId: routeDigestId }) => {
     const identity = await getIdentityOrThrow(ctx);
+    const digestId = ctx.db.normalizeId('digests', routeDigestId);
+    if (digestId === null) return null;
     const digest = await ctx.db.get('digests', digestId);
     if (digest === null || digest.userTokenIdentifier !== identity.tokenIdentifier) {
       return null;
@@ -528,7 +531,10 @@ export const getDigestEmailPayload = internalQuery({
       .take(MAX_DIGEST_POSTS);
     const sections = digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category));
     const digestUrl = new URL(env.DIGEST_APP_URL);
-    digestUrl.searchParams.set('digest', digestId);
+    digestUrl.pathname = `${digestUrl.pathname.replace(/\/$/, '')}${digestPath(digestId)}`;
+    digestUrl.searchParams.delete('page');
+    digestUrl.searchParams.delete('digest');
+    digestUrl.hash = '';
     const digestDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(digest._creationTime);
     const successfulServices = digest.serviceResults.filter(({ status }) => status === 'succeeded').length;
     const preview = [

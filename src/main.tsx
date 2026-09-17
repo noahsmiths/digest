@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import { ConvexReactClient } from 'convex/react';
+import { BrowserRouter } from 'react-router';
 import { api } from '../convex/_generated/api';
 import '@fontsource/alegreya/latin-400.css';
 import '@fontsource/alegreya/latin-400-italic.css';
@@ -23,7 +24,7 @@ if (root === null) {
 createRoot(root).render(
   <StrictMode>
     <ConvexAuthProvider client={convex} api={api.auth}>
-      <App />
+      <BrowserRouter basename={import.meta.env.BASE_URL}><App /></BrowserRouter>
     </ConvexAuthProvider>
   </StrictMode>,
 );

@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 export function ArrowIcon({ direction = 'right' }: { direction?: 'left' | 'right' }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow-icon">
@@ -14,9 +16,9 @@ export function ArrowIcon({ direction = 'right' }: { direction?: 'left' | 'right
 
 export function Brand() {
   return (
-    <span className="brand" aria-label="Digest">
+    <Link to="/" className="brand" aria-label="Digest home">
       <span className="brand-mark" aria-hidden="true">d.</span>
       <span className="brand-name">digest</span>
-    </span>
+    </Link>
   );
 }

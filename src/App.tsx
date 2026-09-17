@@ -1,5 +1,6 @@
-import { Authenticated, Unauthenticated, useAction, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
+import { useAction, useConvexAuth, useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { useEffect, useRef, useState } from 'react';
+import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router';
 import { api } from '../convex/_generated/api';
 import type { Id } from '../convex/_generated/dataModel';
 import { AuthButton } from './auth/AuthForm';
@@ -8,24 +9,57 @@ import { LandingPage } from './ui/LandingPage';
 import { SettingsPage } from './ui/SettingsPage';
 import { Brand } from './ui/Chrome';
 import { serviceName, type Page, type Service } from './ui/shared';
+import { digestPath } from '../shared/routes';
 
 export default function App() {
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.title = pathname === '/settings' ? 'Settings · Digest' : pathname.startsWith('/digest') ? 'Your digest · Digest' : 'Digest';
+  }, [pathname]);
+
+  if (isLoading) return <AppLoading />;
   return (
-    <>
-      <Unauthenticated><LandingPage /></Unauthenticated>
-      <Authenticated><SignedInApp /></Authenticated>
-    </>
+    <Routes>
+      <Route path="/" element={isAuthenticated ? <HomeRedirect /> : <LandingPage />} />
+      <Route element={isAuthenticated ? <Outlet /> : <LandingPage />}>
+        <Route path="/digest" element={<SignedInApp page="digest" />} />
+        <Route path="/digest/:digestId" element={<SignedInApp page="digest" />} />
+        <Route path="/settings" element={<SignedInApp page="settings" />} />
+      </Route>
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }
 
-function readPageFromURL(): Page | null {
-  const query = new URLSearchParams(window.location.search);
-  if (query.get('page') === 'settings' || query.get('page') === 'services') return 'settings';
-  if (query.get('page') === 'digest' || query.has('digest')) return 'digest';
-  return null;
+function AppLoading() {
+  return <div className="app-shell"><header className="site-header app-header"><Brand /></header><main className="app-loading" aria-live="polite">Opening your reading space…</main></div>;
 }
 
-function SignedInApp() {
+function HomeRedirect() {
+  const linkedServices = useQuery(api.login.listLinkedServices);
+  if (linkedServices === undefined) return <AppLoading />;
+  return <Navigate to={linkedServices.length === 0 ? '/settings' : '/digest'} replace />;
+}
+
+function NotFoundPage() {
+  return (
+    <div className="app-shell">
+      <header className="site-header app-header"><Brand /><AuthButton className="header-auth" /></header>
+      <main className="page-frame">
+        <div className="page-heading"><div><h1>Page not found.</h1><p>This address doesn’t point to a page in Digest.</p></div></div>
+        <Link className="text-action" to="/">Return to Digest</Link>
+      </main>
+    </div>
+  );
+}
+
+function SignedInApp({ page }: { page: Page }) {
+  const routerNavigate = useNavigate();
+  const { pathname } = useLocation();
+  const { digestId } = useParams<{ digestId: string }>();
   const linkedServices = useQuery(api.login.listLinkedServices);
   const { results: digests, status: paginationStatus, loadMore } = usePaginatedQuery(
     api.digests.list, {}, { initialNumItems: 10 },
@@ -39,27 +73,16 @@ function SignedInApp() {
   const updatePreferences = useMutation(api.preferences.update);
   const updateClassificationPrompt = useMutation(api.preferences.updateClassificationPrompt);
 
-  const [pageOverride, setPageOverride] = useState<Page | null>(readPageFromURL);
-  const [selectedDigestId, setSelectedDigestId] = useState<Id<'digests'> | null>(
-    () => new URLSearchParams(window.location.search).get('digest') as Id<'digests'> | null,
-  );
   const [loggingInService, setLoggingInService] = useState<Service | null>(null);
   const [disconnectingService, setDisconnectingService] = useState<Service | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [firecrawlLiveViewURL, setFirecrawlLiveViewURL] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isStartingDigest, setIsStartingDigest] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<{ pathname: string; message: string } | null>(null);
+  const error = pageError?.pathname === pathname ? pageError.message : null;
+  const setError = (message: string | null) => setPageError(message === null ? null : { pathname, message });
   const hasEnsuredPreferences = useRef(false);
-
-  useEffect(() => {
-    const restorePage = () => {
-      setPageOverride(readPageFromURL());
-      setSelectedDigestId(new URLSearchParams(window.location.search).get('digest') as Id<'digests'> | null);
-    };
-    window.addEventListener('popstate', restorePage);
-    return () => window.removeEventListener('popstate', restorePage);
-  }, []);
 
   useEffect(() => {
     if (preferences === undefined || hasEnsuredPreferences.current) return;
@@ -68,25 +91,16 @@ function SignedInApp() {
     void ensurePreferences({ timeZone });
   }, [ensurePreferences, preferences]);
 
-  const page = pageOverride ?? (linkedServices?.length === 0 ? 'settings' : 'digest');
-  const currentDigestId = selectedDigestId ?? digests[0]?._id ?? null;
-  const selectedDigest = useQuery(api.digests.get, currentDigestId === null ? 'skip' : { digestId: currentDigestId });
+  const currentDigestId = digestId ?? digests[0]?._id ?? null;
+  const selectedDigest = useQuery(api.digests.get, page !== 'digest' || currentDigestId === null ? 'skip' : { digestId: currentDigestId });
   const activeDigest = digests.find(({ status }) => status === 'running');
 
   const navigate = (nextPage: Page, digestId: Id<'digests'> | null = null) => {
-    setPageOverride(nextPage);
     setError(null);
-    if (nextPage === 'digest' && digestId !== null) setSelectedDigestId(digestId);
-    const query = new URLSearchParams(window.location.search);
-    query.set('page', nextPage);
-    if (nextPage === 'settings') query.delete('digest');
-    else if (digestId !== null) query.set('digest', digestId);
-    window.history.pushState(null, '', `${window.location.pathname}?${query.toString()}`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    void routerNavigate(nextPage === 'settings' ? '/settings' : digestId === null ? '/digest' : digestPath(digestId));
   };
 
   const startLogin = async (service: Service) => {
-    setPageOverride('settings');
     setLoggingInService(service);
     setError(null);
     try {
@@ -162,8 +176,8 @@ function SignedInApp() {
       <header className="site-header app-header">
         <Brand />
         <nav className="app-nav" aria-label="Main navigation">
-          <button type="button" className={page === 'digest' ? 'nav-link active' : 'nav-link'} aria-current={page === 'digest' ? 'page' : undefined} onClick={() => navigate('digest')}>Digest</button>
-          <button type="button" className={page === 'settings' ? 'nav-link active' : 'nav-link'} aria-current={page === 'settings' ? 'page' : undefined} onClick={() => navigate('settings')}>Settings</button>
+          <NavLink to="/digest" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} onClick={() => setError(null)}>Digest</NavLink>
+          <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} onClick={() => setError(null)}>Settings</NavLink>
         </nav>
         <AuthButton className="header-auth" />
       </header>
@@ -199,8 +213,6 @@ function SignedInApp() {
           isStartingDigest={isStartingDigest}
           error={error}
           onGenerate={generateDigest}
-          onSelectDigest={(digestId) => navigate('digest', digestId)}
-          onSettings={() => navigate('settings')}
         />
       )}
     </div>

@@ -1,11 +1,13 @@
 import { useQuery } from 'convex/react';
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { ArrowIcon } from './Chrome';
 import { Modal } from './Modal';
 import { formatDate, serviceName, statusLabel, type Service } from './shared';
 import { DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../../shared/classificationPrompt';
+import { digestPath } from '../../shared/routes';
 
 export type DigestData = NonNullable<ReturnType<typeof useQuery<typeof api.digests.get>>>;
 
@@ -27,21 +29,17 @@ export function DigestPage({
   isStartingDigest,
   error,
   onGenerate,
-  onSelectDigest,
-  onSettings,
 }: {
   linkedServices: Service[];
   digests: HistoryItem[];
   paginationStatus: 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted';
   loadMore: (numItems: number) => void;
-  currentDigestId: Id<'digests'> | null;
+  currentDigestId: string | null;
   selectedDigest: DigestData | null | undefined;
   activeDigest: HistoryItem | undefined;
   isStartingDigest: boolean;
   error: string | null;
   onGenerate: () => Promise<void>;
-  onSelectDigest: (digestId: Id<'digests'>) => void;
-  onSettings: () => void;
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   return (
@@ -67,7 +65,7 @@ export function DigestPage({
       {linkedServices.length === 0 && (
         <div className="inline-alert empty-alert">
           <p>Connect a service before making a digest.</p>
-          <button type="button" className="text-action" onClick={onSettings}>Open settings <ArrowIcon /></button>
+          <Link className="text-action" to="/settings">Open settings <ArrowIcon /></Link>
         </div>
       )}
 
@@ -89,15 +87,14 @@ export function DigestPage({
             <ul className="history-list">
               {digests.map((digest) => (
                 <li key={digest._id}>
-                  <button
+                  <Link
                     className={currentDigestId === digest._id ? 'history-item active' : 'history-item'}
-                    type="button"
+                    to={digestPath(digest._id)}
                     aria-current={currentDigestId === digest._id ? 'true' : undefined}
-                    onClick={() => onSelectDigest(digest._id)}
                   >
                     <span className="history-date">{formatDate(digest._creationTime)}</span>
                     <span className="history-meta">{statusLabel(digest.status)} <span aria-hidden="true">·</span> {digest.postCount} posts</span>
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -25,6 +25,25 @@ GitHub sign-in additionally requires a GitHub OAuth app whose callback URL is
 `<CONVEX_SITE_URL>/oauth/github/callback`, plus `AUTH_GITHUB_CLIENT_ID` and
 `AUTH_GITHUB_CLIENT_SECRET` in the Convex deployment environment.
 
+## Client-side routes and static hosting
+
+The app uses React Router's browser-history router: `/` is the landing page
+(or redirects signed-in users to their digest or connection settings), `/digest`
+opens the latest digest, `/digest/:digestId` opens a saved digest, and `/settings`
+opens settings. Signed-out visitors retain their requested path through sign-in.
+Old `?page=...` and `?digest=...` links are intentionally no longer supported.
+
+Build with `npm run build` and statically serve `dist/`. No rendering server is
+needed. The static host must serve `index.html` for unmatched paths without
+changing the URL, while serving existing assets normally. This enables direct
+links and refreshes. `public/_redirects` supplies this SPA fallback for hosts
+such as Netlify and Cloudflare Pages; configure the equivalent rewrite on other
+hosts. See [React Router's client-side setup](https://reactrouter.com/start/declarative/installation).
+
+For a subdirectory deployment, set Vite's `base` to that directory and set
+`DIGEST_APP_URL` to the same public app base URL. The router uses Vite's base;
+digest email links preserve the app's base path.
+
 ## Digest email
 
 Digest completion queues a compact email through AgentMail, with a link to the
