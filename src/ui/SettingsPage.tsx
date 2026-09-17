@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowIcon } from './Chrome';
+import { Modal } from './Modal';
 import { serviceName, services, type Service } from './shared';
 import { classificationPromptError, DEFAULT_CLASSIFICATION_PROMPT, parseClassificationPrompt, serializeClassificationPrompt } from '../../shared/classificationPrompt';
 
@@ -91,16 +92,7 @@ export function SettingsPage({
         {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
 
         {activeService !== null && firecrawlLiveViewURL !== '' && (
-          <div className="connection-login">
-            <div className="connection-login-heading">
-              <h3>Finish connecting {serviceName(activeService)}</h3>
-              <p>Sign in below, then save the connection when it is complete.</p>
-            </div>
-            <iframe src={firecrawlLiveViewURL} title={`${serviceName(activeService)} login`} />
-            <button className="primary-action" type="button" disabled={isSaving} onClick={() => void onSave()}>
-              {isSaving ? 'Saving connection…' : 'Save connection'} <ArrowIcon />
-            </button>
-          </div>
+          <ConnectionLogin key={`${activeService}-${firecrawlLiveViewURL}`} service={activeService} url={firecrawlLiveViewURL} isSaving={isSaving} error={error} onSave={onSave} />
         )}
 
         <ClassificationSettings prompt={preferences.classificationPrompt} onSave={onSaveClassificationPrompt} />
@@ -119,6 +111,37 @@ export function SettingsPage({
         </div>
       </section>
     </main>
+  );
+}
+
+function ConnectionLogin({ service, url, isSaving, error, onSave }: { service: Service; url: string; isSaving: boolean; error: string | null; onSave: () => Promise<void> }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const resumeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isOpen) resumeRef.current?.focus();
+  }, [isOpen]);
+  return (
+    <>
+      <div className="connection-resume">
+        <p>Your {serviceName(service)} connection is not saved yet.</p>
+        <button ref={resumeRef} className="small-action" type="button" onClick={() => setIsOpen(true)}>Resume connection <ArrowIcon /></button>
+      </div>
+      {isOpen && (
+        <Modal className="connection-modal" label={`Connect ${serviceName(service)}`} onClose={() => setIsOpen(false)}>
+          <div className="connection-login">
+            <div className="connection-login-heading">
+              <h2>Finish connecting {serviceName(service)}</h2>
+              <p>Sign in below, then save the connection when it is complete.</p>
+            </div>
+            <iframe src={url} title={`${serviceName(service)} login`} />
+            {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
+            <button className="primary-action" type="button" disabled={isSaving} onClick={() => void onSave()}>
+              {isSaving ? 'Saving connection…' : 'Save connection'} <ArrowIcon />
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 

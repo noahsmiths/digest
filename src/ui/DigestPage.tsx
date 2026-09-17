@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { ArrowIcon } from './Chrome';
+import { Modal } from './Modal';
 import { formatDate, serviceName, statusLabel, type Service } from './shared';
 import { DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../../shared/classificationPrompt';
 
@@ -222,6 +223,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
 
 function DigestPost({ post }: { post: DigestData['posts'][number] }) {
   const [imageIndex, setImageIndex] = useState(0);
+  const [imagesOpen, setImagesOpen] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
   const image = post.images[imageIndex];
   const isLong = post.body.length > 620;
@@ -245,7 +247,9 @@ function DigestPost({ post }: { post: DigestData['posts'][number] }) {
       </div>
       {image !== undefined && (
         <div className="post-image-carousel" aria-label={`Images from ${post.author}'s post`}>
-          <img src={image.url} alt={`Image ${imageIndex + 1} of ${post.images.length} from ${post.author}'s ${serviceName(post.service)} post`} />
+          <button className="post-image-open" type="button" aria-label={`View image ${imageIndex + 1} of ${post.images.length} from ${post.author}'s post`} aria-haspopup="dialog" onClick={() => setImagesOpen(true)}>
+            <img src={image.url} alt={`Image ${imageIndex + 1} of ${post.images.length} from ${post.author}'s ${serviceName(post.service)} post`} />
+          </button>
           {post.images.length > 1 && (
             <div className="carousel-controls">
               <span className="carousel-count">{imageIndex + 1} / {post.images.length}</span>
@@ -256,6 +260,26 @@ function DigestPost({ post }: { post: DigestData['posts'][number] }) {
             </div>
           )}
         </div>
+      )}
+      {imagesOpen && image !== undefined && (
+        <Modal
+          className="image-modal"
+          label={`Images from ${post.author}'s post`}
+          onClose={() => setImagesOpen(false)}
+          onKeyDown={(event) => {
+            if (post.images.length < 2) return;
+            if (event.key === 'ArrowLeft') { event.preventDefault(); previousImage(); }
+            if (event.key === 'ArrowRight') { event.preventDefault(); nextImage(); }
+          }}
+        >
+          <div className="image-modal-heading"><h2>{post.author}</h2><p>{serviceName(post.service)}</p></div>
+          <img className="image-modal-image" src={image.url} alt={`Image ${imageIndex + 1} of ${post.images.length} from ${post.author}'s ${serviceName(post.service)} post`} />
+          <div className="image-modal-controls">
+            {post.images.length > 1 && <button className="small-action" type="button" aria-label="Previous image" onClick={previousImage}><ArrowIcon direction="left" /> Previous</button>}
+            <span className="carousel-count" role="status" aria-live="polite">{imageIndex + 1} / {post.images.length}</span>
+            {post.images.length > 1 && <button className="small-action" type="button" aria-label="Next image" onClick={nextImage}>Next <ArrowIcon /></button>}
+          </div>
+        </Modal>
       )}
     </article>
   );

@@ -2,8 +2,9 @@ import { useAuthActions } from '@convex-dev/auth/react';
 import { useOauth, useSignInWithGithub, type OauthFlowErrorCode } from '@convex-dev/auth/providers/oauth/react';
 import { useSignInWithPassword, useSignUpWithPassword } from '@convex-dev/auth/providers/password/react';
 import { useConvexAuth } from 'convex/react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { api } from '../../convex/_generated/api';
+import { Modal } from '../ui/Modal';
 
 const oauthErrors: Record<OauthFlowErrorCode, string> = {
   access_denied: 'Sign-in was cancelled.',
@@ -74,12 +75,6 @@ export function AuthButton({ label, className = '' }: { label?: string; classNam
   const { signOut } = useAuthActions();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    if (isOpen) dialogRef.current?.showModal();
-    else dialogRef.current?.close();
-  }, [isOpen]);
 
   if (isAuthenticated) {
     return <button className={className} type="button" onClick={() => void signOut()}>Sign out</button>;
@@ -88,12 +83,7 @@ export function AuthButton({ label, className = '' }: { label?: string; classNam
   return (
     <>
       <button className={className} type="button" disabled={isLoading} onClick={() => setIsOpen(true)}>{label ?? 'Sign in'}</button>
-      <dialog className="auth-dialog" ref={dialogRef} onClose={() => setIsOpen(false)} aria-label="Sign in to Digest">
-        <button className="dialog-close" type="button" onClick={() => setIsOpen(false)} aria-label="Close sign-in dialog">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5 5 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
-        </button>
-        <AuthForm />
-      </dialog>
+      {isOpen && <Modal className="auth-dialog" label="Sign in to Digest" onClose={() => setIsOpen(false)}><AuthForm /></Modal>}
     </>
   );
 }
