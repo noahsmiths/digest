@@ -27,6 +27,7 @@ export const sendDigestEmail = internalAction({
           to: payload.to,
           subject: payload.subject,
           text: payload.text,
+          html: payload.html,
           labels: ['daily-digest'],
         },
         { idempotencyKey: payload.idempotencyKey },

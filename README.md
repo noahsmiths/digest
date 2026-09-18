@@ -24,6 +24,21 @@ Copy `.env.local.example` to `.env.local` and set `VITE_CONVEX_URL` to your Conv
 GitHub sign-in additionally requires a GitHub OAuth app whose callback URL is
 `<CONVEX_SITE_URL>/oauth/github/callback`, plus `AUTH_GITHUB_CLIENT_ID` and
 `AUTH_GITHUB_CLIENT_SECRET` in the Convex deployment environment.
+Its allowed redirect origin comes from `DIGEST_APP_URL`; set that variable to
+the frontend URL for each deployment.
+
+## Production
+
+The app is live at [focused-wolf-619.convex.site](https://focused-wolf-619.convex.site)
+with its production backend at `https://focused-wolf-619.convex.cloud`.
+Production `DIGEST_APP_URL` is
+`https://focused-wolf-619.convex.site`. The production GitHub OAuth callback URL is
+`https://focused-wolf-619.convex.site/oauth/github/callback`.
+Set this callback URL in the GitHub OAuth app's settings for production sign-in.
+
+Run `npm run deploy` to build against the production backend, deploy Convex,
+and upload the frontend to Convex static hosting. Authentication and AgentMail
+webhook routes keep their existing paths.
 
 ## Client-side routes and static hosting
 

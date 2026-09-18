@@ -1,4 +1,5 @@
 import { components, internal } from './_generated/api';
+import { env } from './_generated/server';
 import { setupCore } from '@convex-dev/auth/core/setup';
 import { setupGithub } from '@convex-dev/auth/providers/oauth/github';
 import { setupUsernamePassword } from '@convex-dev/auth/providers/password/setup';
@@ -13,5 +14,5 @@ export const { signUpWithPassword, signInWithPassword } = setupUsernamePassword(
 
 export const { startSignInGithub, completeSignInGithub } = setupGithub(core, {
   component: components.oauthGithub,
-  allowedRedirectOrigins: ['http://localhost:5173'],
+  allowedRedirectOrigins: [new URL(env.DIGEST_APP_URL).origin],
 }).attachUserCallbacks({ createUser: internal.users.createUserGithub });

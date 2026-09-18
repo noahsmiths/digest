@@ -1,5 +1,6 @@
 import { httpRouter } from 'convex/server';
-import { internal } from './_generated/api';
+import { registerStaticRoutes } from '@convex-dev/static-hosting';
+import { components, internal } from './_generated/api';
 import { httpAction } from './_generated/server';
 
 const http = httpRouter();
@@ -16,4 +17,5 @@ http.route({
     return new Response(null, { status });
   }),
 });
+registerStaticRoutes(http, components.staticHosting);
 export default http;

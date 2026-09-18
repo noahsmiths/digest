@@ -206,8 +206,9 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
     }
     const startTop = scroller.scrollTop;
     const distance = Math.max(0, targetTop) - startTop;
-    const startedAt = performance.now();
+    let startedAt: number | undefined;
     const animateScroll = (now: number) => {
+      startedAt ??= now;
       const progress = Math.min(1, (now - startedAt) / 180);
       scroller.scrollTo({ top: startTop + distance * (1 - (1 - progress) ** 3), behavior: 'instant' });
       scrollFrameRef.current = progress < 1 ? requestAnimationFrame(animateScroll) : null;

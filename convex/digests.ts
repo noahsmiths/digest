@@ -8,13 +8,12 @@ import schema, { digestDecisionValidator, serviceValidator } from './schema';
 import { scrapedPostValidator } from './scraping/types';
 import { getIdentityOrThrow } from './utilities/auth';
 import type { Service } from './utilities/sites';
-import { classificationCategoryIds, DEFAULT_CLASSIFICATION_PROMPT, digestCategories } from '../shared/classificationPrompt';
+import { classificationCategoryIds, DEFAULT_CLASSIFICATION_PROMPT } from '../shared/classificationPrompt';
 import { digestPath } from '../shared/routes';
+import { renderDigestEmail } from '../shared/digestEmail';
 
 const MAX_POSTS_PER_SERVICE = 50;
 const MAX_DIGEST_POSTS = 150;
-const MAX_EMAIL_POSTS_PER_CATEGORY = 3;
-const MAX_EMAIL_POST_LENGTH = 180;
 const serviceOrder: Service[] = ['instagram', 'x', 'linkedin'];
 const DELETE_BATCH_SIZE = 25;
 
@@ -25,6 +24,7 @@ const digestEmailPayloadValidator = v.union(
     to: v.string(),
     subject: v.string(),
     text: v.string(),
+    html: v.string(),
     idempotencyKey: v.string(),
   }),
   v.object({ kind: v.literal('skip'), failureCode: v.string() }),
@@ -580,20 +580,6 @@ export const finalize = internalMutation({
   },
 });
 
-function truncateEmailPost(body: string) {
-  const normalized = body.replace(/\s+/g, ' ').trim();
-  return normalized.length <= MAX_EMAIL_POST_LENGTH
-    ? normalized
-    : `${normalized.slice(0, MAX_EMAIL_POST_LENGTH - 1).trimEnd()}…`;
-}
-
-function formatEmailSection(title: string, posts: Array<{ author: string; body: string; service: Service }>) {
-  if (posts.length === 0) return '';
-  return `\n${title}\n${posts
-    .map(({ author, body, service }) => `• ${author} on ${service}: ${truncateEmailPost(body) || 'Shared a post.'}`)
-    .join('\n')}`;
-}
-
 export const getDigestEmailPayload = internalQuery({
   args: { digestId: v.id('digests') },
   returns: digestEmailPayloadValidator,
@@ -613,29 +599,29 @@ export const getDigestEmailPayload = internalQuery({
       .query('digestPosts')
       .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
       .take(MAX_DIGEST_POSTS);
-    const sections = digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category));
     const digestUrl = new URL(env.DIGEST_APP_URL);
     digestUrl.pathname = `${digestUrl.pathname.replace(/\/$/, '')}${digestPath(digestId)}`;
     digestUrl.searchParams.delete('page');
     digestUrl.searchParams.delete('digest');
     digestUrl.hash = '';
     const digestDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(digest._creationTime);
-    const successfulServices = digest.serviceResults.filter(({ status }) => status === 'succeeded').length;
-    const preview = [
-      `Your digest for ${digestDate} is ready.`,
-      `${digest.postCount} posts from ${successfulServices} connected ${successfulServices === 1 ? 'service' : 'services'}.`,
-      ...sections.map(({ id, name }) => formatEmailSection(name, posts.filter(({ category }) => category === id).slice(0, MAX_EMAIL_POSTS_PER_CATEGORY))),
-      `\nView the full digest: ${digestUrl.toString()}`,
-      '\nWant different categories or rules? Reply to this email with what you would like to change. Your next digest will use your updated preferences.',
-    ]
-      .filter((section) => section !== '')
-      .join('\n');
+    const rendered = renderDigestEmail({
+      date: digestDate,
+      url: digestUrl.toString(),
+      classificationPrompt: digest.classificationPrompt,
+      classificationFallbackCount: digest.classificationFallbackCount,
+      failedServices: digest.serviceResults.filter(({ status }) => status === 'failed').map(({ service }) => service),
+      posts: await Promise.all(posts.map(async (post) => ({
+        ...post,
+        imageUrl: post.imageStorageIds[0] === undefined ? null : await ctx.storage.getUrl(post.imageStorageIds[0]),
+      }))),
+    });
     return {
       kind: 'send',
       inboxId: env.AGENTMAIL_INBOX_ID,
       to: digest.recipientEmail,
       subject: `Your Digest — ${digestDate}`,
-      text: preview,
+      ...rendered,
       idempotencyKey: digestId,
     };
   },

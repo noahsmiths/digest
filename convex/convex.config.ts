@@ -6,6 +6,7 @@ import oauth from '@convex-dev/auth/providers/oauth/convex.config.js';
 import username from '@convex-dev/auth/username/convex.config.js';
 import agent from '@convex-dev/agent/convex.config.js';
 import workflow from '@convex-dev/workflow/convex.config.js';
+import staticHosting from '@convex-dev/static-hosting/convex.config';
 
 const app = defineApp({
   env: {
@@ -41,5 +42,6 @@ app.use(oauth, {
 });
 app.use(agent);
 app.use(workflow);
+app.use(staticHosting);
 
 export default app;
