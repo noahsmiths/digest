@@ -4,7 +4,7 @@ export type ClassificationPrompt = { categories: PromptCategory[] };
 export const DEFAULT_CLASSIFICATION_PROMPT = `## Social
 Personal life updates from friends, such as trips, birthdays, conversations, graduations, or other social events people want to know about. If the post isn't from a mutual, definitely do NOT include it. If the post is from a mutual, it likely should be included.
 
-## Event
+## Events
 A future meetup, gathering, performance, or other scheduled event with enough concrete timing or planning information to be useful.`;
 
 export function parseClassificationPrompt(prompt: string): ClassificationPrompt {
@@ -42,7 +42,7 @@ export function classificationCategoryIds(prompt: string): [string, ...string[]]
 
 export function digestCategories(prompt: string, postCategories: Array<string | undefined> = []) {
   const categories = parseClassificationPrompt(prompt).categories
-    .map(({ id, name }) => ({ id, name: name === 'Event' ? 'Upcoming events' : name }));
+    .map(({ id, name }) => ({ id, name }));
   for (const id of postCategories) {
     if (id !== undefined && id !== 'drop' && !categories.some((category) => category.id === id)) {
       categories.push({ id, name: id.charAt(0).toUpperCase() + id.slice(1) });

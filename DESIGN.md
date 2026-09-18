@@ -14,13 +14,13 @@ colors:
 typography:
   display:
     fontFamily: "Alegreya, Georgia, serif"
-    fontSize: "clamp(68px, 6.3vw, 96px)"
+    fontSize: "clamp(48px, 5vw, 76px)"
     fontWeight: 500
     lineHeight: 0.98
     letterSpacing: "-0.035em"
   headline:
     fontFamily: "Alegreya, Georgia, serif"
-    fontSize: "clamp(48px, 5vw, 76px)"
+    fontSize: "clamp(36px, 3.5vw, 48px)"
     fontWeight: 500
     lineHeight: 1
     letterSpacing: "-0.03em"
@@ -46,8 +46,11 @@ rounded:
   action: "2px"
   seal: "50%"
 spacing:
-  desktop-gutter: "32px"
+  desktop-gutter: "24px"
   mobile-gutter: "16px"
+  tight: "8px"
+  group: "16px"
+  section: "24px"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
@@ -123,8 +126,8 @@ The palette reads like ink on paper set against a muted sage desk.
 **Character:** The serif makes the digest feel like reading rather than feed scanning. The sans-serif keeps controls, metadata, and status concise.
 
 ### Hierarchy
-- **Display** (500, fluid 68–96px, 0.98 line height): The landing thesis; its italic phrase uses dark rust.
-- **Headline** (500, fluid 48–76px, 1 line height): Page introductions.
+- **Display** (500, fluid 48–76px, 0.98 line height): The landing thesis; its italic phrase uses dark rust. Mobile uses 34–48px.
+- **Headline** (500, fluid 36–48px, 1 line height): Page introductions. The mobile digest heading uses 32px.
 - **Title** (500, fluid 33–48px, 1 line height): The letter heading; digest and mobile variants adjust its size.
 - **Body reading** (21px, 1.34 line height): Original post text, with a maximum measure of 72ch. Mobile post text is 19px.
 - **Body UI** (17px): The page default, controls, and explanatory copy.
@@ -134,9 +137,9 @@ The palette reads like ink on paper set against a muted sage desk.
 
 ## Layout
 
-The desktop canvas is centered with a maximum width of roughly 1430–1450px and a 32px gutter per side. The landing hero places the thesis beside a large example sheet in a two-column grid. The digest page places a sticky history rail beside the reading sheet; within that sheet a sticky section index sits beside the passages. Connections use one narrower sheet of service rows.
+The desktop canvas is centered with a maximum width of 1650px and a 24px gutter per side. Each page occupies the dynamic viewport height, with a compact 64px masthead and no document scrolling. An 8/16/24px spacing scale separates tight controls, related groups, and distinct sections. The landing hero places the thesis beside a large internally scrollable example sheet, followed by a compact closing passage and footer. The digest page gives all remaining height to its reading layout: a 190px independently scrolling history rail beside an expanded, internally scrolling reading sheet. A sticky section index stays beside the passages, and section selection follows the reader’s scroll position. Settings uses one narrower, internally scrolling sheet.
 
-At 1100px, the landing hero stacks and the reading rails narrow. At 760px, the gutter becomes 16px, the preview index and digest index become horizontal, the history rail becomes a collapsible horizontal list, and service actions wrap below their names. At 390px, the smallest seals and example images shrink again. Paper padding varies with viewport width rather than following a universal spacing scale.
+At 1100px, the preview index becomes horizontal and the reading rails narrow. At 760px, the gutter and paper padding become 16px, the masthead becomes a single compact 56px row, the hero stacks, and the digest index becomes a sticky horizontally scrolling row. History becomes a collapsible, bounded horizontal list, and service actions wrap below their names. On short screens the landing main can scroll internally so its copy remains accessible while the outer page and footer stay fixed. At 390px, the smallest seals and example images shrink again.
 
 **The Letter Measure Rule.** Give post text a readable measure before allocating space to images; a post image is secondary and stays compact beside its passage.
 

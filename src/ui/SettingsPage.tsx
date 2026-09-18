@@ -11,6 +11,8 @@ type Preferences = {
   classificationPrompt: string;
 };
 
+type SettingsSection = 'connections' | 'rules' | 'delivery';
+
 export function SettingsPage({
   linkedServices,
   activeService,
@@ -42,74 +44,93 @@ export function SettingsPage({
   onSaveClassificationPrompt: (prompt: string) => Promise<void>;
   onDigest: () => void;
 }) {
+  const [activeSection, setActiveSection] = useState<SettingsSection>('connections');
+
   return (
     <main className="settings-page page-frame">
-      <div className="page-heading settings-heading">
-        <h1>Set the pace.</h1>
-        <p>Choose what Digest reads, then decide when your daily letter should arrive.</p>
-      </div>
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {([
+            ['connections', 'Connections'],
+            ['rules', 'Digest Categories'],
+            ['delivery', 'Daily Delivery'],
+          ] as const).map(([section, label]) => (
+            <button
+              className="settings-nav-link"
+              type="button"
+              key={section}
+              aria-pressed={activeSection === section}
+              onClick={() => setActiveSection(section)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
 
-      <section className="settings-sheet letter-sheet" aria-labelledby="connections-title">
-        <div className="settings-sheet-head">
-          <div>
-            <h2 id="connections-title">Connections</h2>
-            <p>{linkedServices.length === 0 ? 'Start with one service.' : `${linkedServices.length} of ${services.length} services connected.`}</p>
+        <div className="settings-panes">
+          <section
+            className="settings-pane settings-sheet letter-sheet"
+            aria-labelledby="connections-title"
+            hidden={activeSection !== 'connections'}
+            tabIndex={0}
+          >
+            <div className="settings-sheet-head">
+              <div>
+                <h2 id="connections-title">Connections</h2>
+                <p>{linkedServices.length === 0 ? 'Start with one service.' : `${linkedServices.length} of ${services.length} services connected.`}</p>
+              </div>
+            </div>
+
+            <ul className="service-list">
+              {services.map((service) => {
+                const isConnected = linkedServices.includes(service.id);
+                const isStarting = loggingInService === service.id;
+                const isDisconnecting = disconnectingService === service.id;
+                return (
+                  <li className="service-row" key={service.id}>
+                    <div className="service-name">
+                      <div>
+                        <h3>{service.name}</h3>
+                      </div>
+                    </div>
+                    <div className="service-action">
+                      <span className={isConnected ? 'connection-state connected' : 'connection-state'}>
+                        <span aria-hidden="true" />{isConnected ? 'Connected' : 'Not connected'}
+                      </span>
+                      <button
+                        className={isConnected ? 'primary-action danger-action' : 'primary-action'}
+                        type="button"
+                        disabled={loggingInService !== null || disconnectingService !== null || activeService !== null || isSaving}
+                        onClick={isConnected ? () => void onDisconnect(service.id) : () => void onConnect(service.id)}
+                      >
+                        {isConnected ? (isDisconnecting ? 'Disconnecting…' : 'Disconnect') : (isStarting ? 'Opening…' : 'Connect')}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
+
+            {activeService !== null && firecrawlLiveViewURL !== '' && (
+              <ConnectionLogin key={`${activeService}-${firecrawlLiveViewURL}`} service={activeService} url={firecrawlLiveViewURL} isSaving={isSaving} error={error} onSave={onSave} />
+            )}
+          </section>
+
+          <div className="settings-pane settings-sheet letter-sheet" hidden={activeSection !== 'rules'}>
+            <ClassificationSettings prompt={preferences.classificationPrompt} onSave={onSaveClassificationPrompt} />
           </div>
-          <span className="sheet-corner" aria-hidden="true">d.</span>
+
+          <div className="settings-pane settings-sheet letter-sheet" hidden={activeSection !== 'delivery'}>
+            <DailyDeliverySettings
+              key={`${preferences.automaticDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
+              preferences={preferences}
+              onSave={onSavePreferences}
+            />
+          </div>
         </div>
-
-        <ul className="service-list">
-          {services.map((service) => {
-            const isConnected = linkedServices.includes(service.id);
-            const isStarting = loggingInService === service.id;
-            const isDisconnecting = disconnectingService === service.id;
-            return (
-              <li className="service-row" key={service.id}>
-                <div className="service-name">
-                  <div>
-                    <h3>{service.name}</h3>
-                    <p>{service.detail}</p>
-                  </div>
-                </div>
-                <div className="service-action">
-                  <span className={isConnected ? 'connection-state connected' : 'connection-state'}>
-                    <span aria-hidden="true" />{isConnected ? 'Connected' : 'Not connected'}
-                  </span>
-                  <button
-                    className="small-action"
-                    type="button"
-                    disabled={loggingInService !== null || disconnectingService !== null || activeService !== null || isSaving}
-                    onClick={isConnected ? () => void onDisconnect(service.id) : () => void onConnect(service.id)}
-                  >
-                    {isConnected ? (isDisconnecting ? 'Disconnecting…' : 'Disconnect') : (isStarting ? 'Opening…' : 'Connect')}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
-
-        {activeService !== null && firecrawlLiveViewURL !== '' && (
-          <ConnectionLogin key={`${activeService}-${firecrawlLiveViewURL}`} service={activeService} url={firecrawlLiveViewURL} isSaving={isSaving} error={error} onSave={onSave} />
-        )}
-
-        <ClassificationSettings prompt={preferences.classificationPrompt} onSave={onSaveClassificationPrompt} />
-
-        <DailyDeliverySettings
-          key={`${preferences.automaticDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
-          preferences={preferences}
-          onSave={onSavePreferences}
-        />
-
-        <div className="settings-sheet-foot">
-          <p>{linkedServices.length === 0 ? 'Connect a service to make your first digest.' : 'Your sources are ready. Your digest is one step away.'}</p>
-          <button className="primary-action" type="button" disabled={linkedServices.length === 0} onClick={onDigest}>
-            Go to my digest <ArrowIcon />
-          </button>
-        </div>
-      </section>
+      </div>
     </main>
   );
 }
@@ -182,8 +203,8 @@ function ClassificationSettings({ prompt, onSave }: { prompt: string; onSave: (p
   return (
     <section className="classification-settings" aria-labelledby="classification-settings-title">
       <div className="delivery-settings-heading">
-        <h2 id="classification-settings-title">What makes the cut</h2>
-        <p>Shape your digest with your own categories and rules. Changes apply to new digests, including daily delivery.</p>
+        <h2 id="classification-settings-title">Your digest rules</h2>
+        <p>Shape your digest with your own categories and rules. Changes apply to all new digests. You can also change these by naturally replying to a daily digest email, for example saying something like "Create a new category for Shoe Releases"</p>
       </div>
       <fieldset disabled={isSaving} className="classification-fields">
         <ul className="category-rules">
@@ -239,7 +260,7 @@ function DailyDeliverySettings({
     <section className="delivery-settings" aria-labelledby="delivery-settings-title">
       <div className="delivery-settings-heading">
         <h2 id="delivery-settings-title">Daily delivery</h2>
-        <p>A fresh digest is created at your chosen time and emailed when it is ready.</p>
+        <p>A new digest is automatically created at your selected time and emailed to you.</p>
       </div>
       <label className="delivery-switch">
         <input
@@ -249,8 +270,7 @@ function DailyDeliverySettings({
         />
         <span className="delivery-switch-control" aria-hidden="true"><span /></span>
         <span>
-          <strong>Automatically make my digest</strong>
-          <small>{automaticDigestEnabled ? 'On by default — your next daily letter is scheduled.' : 'Off — you can still make a digest whenever you like.'}</small>
+          <strong>Automatically make my digest every day</strong>
         </span>
       </label>
       <label className="delivery-time-field">

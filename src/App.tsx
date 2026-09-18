@@ -176,7 +176,7 @@ function SignedInApp({ page }: { page: Page }) {
       <header className="site-header app-header">
         <Brand />
         <nav className="app-nav" aria-label="Main navigation">
-          <NavLink to="/digest" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} onClick={() => setError(null)}>Digest</NavLink>
+          <NavLink to="/digest" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} onClick={() => setError(null)}>My Digests</NavLink>
           <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} onClick={() => setError(null)}>Settings</NavLink>
         </nav>
         <AuthButton className="header-auth" />

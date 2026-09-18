@@ -263,7 +263,7 @@
       "kind": "nav",
       "refersTo": "section-selector-active",
       "description": "Persistent passage index for Social and Upcoming events.",
-      "html": "<nav class=\"ds-section-nav\" aria-label=\"Digest sections\"><span class=\"ds-index-title\">In this digest</span><button class=\"ds-index-link ds-index-active\" aria-current=\"true\">Social <span>4</span></button><button class=\"ds-index-link\">Upcoming events <span>2</span></button></nav>",
+      "html": "<nav class=\"ds-section-nav\" aria-label=\"Digest sections\"><span class=\"ds-index-title\">Sections</span><button class=\"ds-index-link ds-index-active\" aria-current=\"true\">Social <span>4</span></button><button class=\"ds-index-link\">Upcoming events <span>2</span></button></nav>",
       "css": ".ds-section-nav{display:flex;flex-direction:column;gap:4px;width:180px;font-family:var(--font-ui)}.ds-index-title{margin:0 0 13px;color:var(--ink-soft);font-size:14px;font-weight:600}.ds-index-link{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:39px;padding:4px 9px;border:0;border-bottom:1px solid transparent;background:transparent;color:var(--ink-soft);text-align:left;font-family:var(--font-ui);font-size:16px;cursor:pointer}.ds-index-link:hover{color:var(--ink);background:var(--paper-soft)}.ds-index-link.ds-index-active{color:var(--ink);border-bottom-color:var(--seal);background:var(--paper-soft);font-weight:700}.ds-index-link:focus-visible{outline:3px solid var(--seal);outline-offset:3px}"
     },
     {

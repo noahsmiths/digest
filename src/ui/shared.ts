@@ -1,12 +1,12 @@
 export const services = [
   { id: 'instagram', name: 'Instagram', detail: 'Posts from the people you follow' },
-  { id: 'x', name: 'X', detail: 'Updates from your following feed' },
+  { id: 'x', name: 'X (Twitter)', detail: 'Updates from your following feed' },
   { id: 'linkedin', name: 'LinkedIn', detail: 'Recent posts from your network' },
 ] as const;
 
 export const categories = [
   { id: 'social', name: 'Social', description: 'People and conversations' },
-  { id: 'event', name: 'Upcoming events', description: 'Dates worth knowing' },
+  { id: 'event', name: 'Events', description: 'Dates worth knowing' },
 ] as const;
 
 export type Service = (typeof services)[number]['id'];

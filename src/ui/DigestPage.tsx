@@ -1,5 +1,5 @@
 import { useQuery } from 'convex/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -44,22 +44,6 @@ export function DigestPage({
   const [historyOpen, setHistoryOpen] = useState(false);
   return (
     <main className="digest-page page-frame">
-      <div className="page-heading digest-heading">
-        <div>
-          <h1>Your digest.</h1>
-          <p>{linkedServices.length} connected {linkedServices.length === 1 ? 'service' : 'services'} · The useful parts, in one place.</p>
-        </div>
-        <button
-          className="primary-action"
-          type="button"
-          disabled={linkedServices.length === 0 || isStartingDigest || activeDigest !== undefined}
-          onClick={() => void onGenerate()}
-        >
-          {isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new digest'}
-          {activeDigest === undefined && <ArrowIcon />}
-        </button>
-      </div>
-
       {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
 
       {linkedServices.length === 0 && (
@@ -71,9 +55,17 @@ export function DigestPage({
 
       <div className="reading-layout">
         <aside className="history-panel" aria-labelledby="history-title">
+          <button
+            className="primary-action history-new-digest"
+            type="button"
+            disabled={linkedServices.length === 0 || isStartingDigest || activeDigest !== undefined}
+            onClick={() => void onGenerate()}
+          >
+            {isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new digest'}
+            {activeDigest === undefined && <ArrowIcon />}
+          </button>
           <div className="history-heading">
-            <h2 id="history-title">Past letters</h2>
-            <span className="history-count">{digests.length}</span>
+            <h2 id="history-title">Past digests</h2>
             <button className="history-toggle" type="button" aria-expanded={historyOpen} aria-controls="history-content" onClick={() => setHistoryOpen((open) => !open)}>
               {historyOpen ? 'Hide history' : 'Show history'}
             </button>
@@ -107,10 +99,9 @@ export function DigestPage({
           </div>
         </aside>
 
-        <section className="reading-sheet letter-sheet" aria-label="Selected digest">
+        <section className="reading-sheet letter-sheet" aria-label="Selected digest" tabIndex={0}>
           {currentDigestId === null ? (
             <div className="digest-empty">
-              <span className="empty-mark" aria-hidden="true">d.</span>
               <h2>A little less noise starts here.</h2>
               <p>Make a digest to gather the useful posts from your connected feeds into a read you can finish.</p>
               {linkedServices.length > 0 && <button className="text-action" type="button" onClick={() => void onGenerate()}>Make your first digest <ArrowIcon /></button>}
@@ -132,43 +123,46 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
   const categories = useMemo(() => digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category)), [digest.classificationPrompt, posts]);
   const groupedPosts = useMemo(() => Object.fromEntries(categories.map(({ id }) => [id, posts.filter(({ category }) => category === id)])), [categories, posts]);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
+  const detailRef = useRef<HTMLDivElement>(null);
   const failedServices = digest.serviceResults.filter(({ status }) => status === 'failed');
   const completedServices = digest.serviceResults.filter(({ status }) => status !== 'pending').length;
 
   useEffect(() => {
+    detailRef.current?.closest<HTMLElement>('.reading-sheet')?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [digest._id]);
+
+  useEffect(() => {
     if ((digest.status !== 'completed' && digest.status !== 'partial') || categories.length === 0) return;
+    const scroller = detailRef.current?.closest<HTMLElement>('.reading-sheet');
+    if (!scroller) return;
     const updateActiveSection = () => {
-      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 40) {
+      if (scroller.scrollHeight > scroller.clientHeight && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4) {
         setActiveCategory(categories[categories.length - 1].id);
         return;
       }
-      const boundary = window.innerHeight * 0.38;
+      const boundary = scroller.getBoundingClientRect().top + scroller.clientHeight * 0.38;
       const current = categories.reduce<string>((selected, category) => {
         const top = document.getElementById(`digest-${encodeURIComponent(category.id)}`)?.getBoundingClientRect().top;
         return top !== undefined && top <= boundary ? category.id : selected;
       }, categories[0].id);
       setActiveCategory(current);
     };
-    window.addEventListener('scroll', updateActiveSection, { passive: true });
+    scroller.addEventListener('scroll', updateActiveSection, { passive: true });
     updateActiveSection();
-    return () => window.removeEventListener('scroll', updateActiveSection);
+    return () => scroller.removeEventListener('scroll', updateActiveSection);
   }, [digest._id, digest.status, categories]);
 
   const chooseCategory = (category: string) => {
     setActiveCategory(category);
-    document.getElementById(`digest-${encodeURIComponent(category)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const scroller = detailRef.current?.closest<HTMLElement>('.reading-sheet');
+    const section = document.getElementById(`digest-${encodeURIComponent(category)}`);
+    if (!scroller || !section) return;
+    const inset = Number.parseFloat(getComputedStyle(section).scrollMarginTop);
+    scroller.scrollTo({ top: scroller.scrollTop + section.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
 
   return (
-    <div className="digest-detail">
-      <div className="digest-letter-head">
-        <div>
-          <h2>A little of what matters.</h2>
-          <p className="digest-subline">{formatDate(digest._creationTime, 'long')} · {digest.postCount} posts from {digest.serviceResults.length} {digest.serviceResults.length === 1 ? 'service' : 'services'}</p>
-        </div>
-        <span className={`digest-status status-${digest.status}`}>{statusLabel(digest.status)}</span>
-      </div>
-
+    <div className="digest-detail" ref={detailRef}>
       {digest.status === 'running' && (
         <div className="digest-progress" role="status">
           <span className="progress-line" aria-hidden="true"><span /></span>
@@ -182,7 +176,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
       {(digest.status === 'completed' || digest.status === 'partial') && (
         <div className="digest-letter-body">
           <nav className="digest-index" aria-label="Digest sections">
-            <span className="index-title">In this digest</span>
+            <span className="index-title">Sections</span>
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -210,7 +204,6 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
                 )}
               </section>
             ))}
-            <p className="digest-end">You’re caught up for now.</p>
           </div>
         </div>
       )}
