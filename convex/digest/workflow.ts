@@ -13,7 +13,7 @@ type Classification = { digestPostId: Id<'digestPosts'>; category: Category };
 
 export const workflow = new WorkflowManager(components.workflow, {
   workpoolOptions: {
-    maxParallelism: 10,
+    maxParallelism: 1,
     defaultRetryBehavior: RETRY_BEHAVIOR,
     retryActionsByDefault: true,
   },

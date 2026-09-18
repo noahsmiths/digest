@@ -14,7 +14,12 @@ export const digestStatusValidator = v.union(
   v.literal('failed'),
 );
 
-export const digestStageValidator = v.union(v.literal('scraping'), v.literal('classifying'), v.literal('done'));
+export const digestStageValidator = v.union(
+  v.literal('queued'),
+  v.literal('scraping'),
+  v.literal('classifying'),
+  v.literal('done'),
+);
 
 export const digestEmailDeliveryStatusValidator = v.union(
   v.literal('pending'),
@@ -73,6 +78,7 @@ export default defineSchema({
     classificationFallbackCount: v.number(),
     classificationPrompt: v.optional(v.string()),
     workflowId: v.optional(v.string()),
+    workflowQueueState: v.optional(v.union(v.literal('queued'), v.literal('running'))),
     completedAt: v.optional(v.number()),
     failureCode: v.optional(v.string()),
     recipientEmail: v.optional(v.string()),
@@ -84,6 +90,8 @@ export default defineSchema({
   })
     .index('by_userTokenIdentifier', ['userTokenIdentifier'])
     .index('by_userTokenIdentifier_and_status', ['userTokenIdentifier', 'status'])
+    .index('by_workflowQueueState', ['workflowQueueState'])
+    .index('by_stage', ['stage'])
     .index('by_emailOutboundId', ['emailOutboundId']),
   emailPreferenceReplies: defineTable({
     digestId: v.id('digests'),
@@ -94,7 +102,13 @@ export default defineSchema({
     threadId: v.string(),
     senderEmail: v.string(),
     agentThreadId: v.string(),
-    status: v.union(v.literal('pending'), v.literal('applied'), v.literal('unchanged'), v.literal('ignored'), v.literal('failed')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('applied'),
+      v.literal('unchanged'),
+      v.literal('ignored'),
+      v.literal('failed'),
+    ),
     directives: v.optional(v.string()),
     previousPrompt: v.optional(v.string()),
     updatedPrompt: v.optional(v.string()),

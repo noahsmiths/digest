@@ -131,7 +131,6 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
   const passagesRef = useRef<HTMLDivElement>(null);
   const scrollFrameRef = useRef<number | null>(null);
   const failedServices = digest.serviceResults.filter(({ status }) => status === 'failed');
-  const completedServices = digest.serviceResults.filter(({ status }) => status !== 'pending').length;
   const isReadable = digest.status === 'completed' || digest.status === 'partial';
 
   const deleteDigest = async () => {
@@ -221,7 +220,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
       {digest.status === 'running' && (
         <div className="digest-progress" role="status">
           <span className="progress-line" aria-hidden="true"><span /></span>
-          <p>{digest.stage === 'scraping' ? `Reading connected feeds (${completedServices}/${digest.serviceResults.length})…` : 'Choosing the useful posts…'}</p>
+          <p>{digest.stage === 'queued' ? 'Your digest is queued and will start when the current digest finishes...' : digest.stage === 'scraping' ? 'Gathering posts...' : 'Choosing the useful posts...'}</p>
         </div>
       )}
       {failedServices.length > 0 && <p className="inline-alert warning-alert">Could not read {failedServices.map(({ service }) => serviceName(service)).join(', ')}. Available services are still included.</p>}

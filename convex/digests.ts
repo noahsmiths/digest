@@ -1,4 +1,11 @@
-import { cancel as cancelWorkflow, cleanup, type WorkflowId, vResultValidator, vWorkflowId, start as startWorkflow } from '@convex-dev/workflow';
+import {
+  cancel as cancelWorkflow,
+  cleanup,
+  type WorkflowId,
+  vResultValidator,
+  vWorkflowId,
+  start as startWorkflow,
+} from '@convex-dev/workflow';
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server';
 import { v, type Infer } from 'convex/values';
 import { components, internal } from './_generated/api';
@@ -125,6 +132,7 @@ export const remove = mutation({
     }
     await ctx.db.delete('digests', digestId);
     await deleteRelatedAssets(ctx, digestId);
+    await startNextDigest(ctx);
     return null;
   },
 });
@@ -160,7 +168,10 @@ async function deleteRelatedAssets(ctx: MutationCtx, digestId: Id<'digests'>) {
   for (const asset of assets) await ctx.db.delete('digestAssets', asset._id);
   for (const reply of replies) {
     if (reply.workflowId !== undefined) await deleteWorkflow(ctx, reply.workflowId);
-    await ctx.runMutation(components.agent.threads.deleteAllForThreadIdAsync, { threadId: reply.agentThreadId, limit: 25 });
+    await ctx.runMutation(components.agent.threads.deleteAllForThreadIdAsync, {
+      threadId: reply.agentThreadId,
+      limit: 25,
+    });
     await ctx.db.delete('emailPreferenceReplies', reply._id);
   }
   if ([posts, assets, replies].some((batch) => batch.length === DELETE_BATCH_SIZE)) {
@@ -234,7 +245,8 @@ async function startDigestForUser(
   const digestId = await ctx.db.insert('digests', {
     userTokenIdentifier,
     status: 'running',
-    stage: 'scraping',
+    stage: 'queued',
+    workflowQueueState: 'queued',
     maxPostsPerService: MAX_POSTS_PER_SERVICE,
     serviceResults: services.map((service) => ({ service, status: 'pending' as const, postCount: 0 })),
     postCount: 0,
@@ -243,6 +255,33 @@ async function startDigestForUser(
     ...(user?.email === undefined ? {} : { recipientEmail: user.email }),
     emailDeliveryStatus: 'pending',
   });
+  await startNextDigest(ctx);
+  return digestId;
+}
+
+async function startNextDigest(ctx: MutationCtx): Promise<void> {
+  const running = await ctx.db
+    .query('digests')
+    .withIndex('by_workflowQueueState', (q) => q.eq('workflowQueueState', 'running'))
+    .first();
+  if (running !== null) return;
+
+  for (const stage of ['scraping', 'classifying'] as const) {
+    const existing = await ctx.db
+      .query('digests')
+      .withIndex('by_stage', (q) => q.eq('stage', stage))
+      .first();
+    if (existing !== null) return;
+  }
+
+  const next = await ctx.db
+    .query('digests')
+    .withIndex('by_workflowQueueState', (q) => q.eq('workflowQueueState', 'queued'))
+    .order('asc')
+    .first();
+  if (next === null) return;
+
+  const digestId = next._id;
   const workflowId: WorkflowId = await startWorkflow(
     ctx,
     internal.digest.workflow.runDigest,
@@ -253,8 +292,7 @@ async function startDigestForUser(
       startAsync: true,
     },
   );
-  await ctx.db.patch('digests', digestId, { workflowId });
-  return digestId;
+  await ctx.db.patch('digests', digestId, { workflowId, workflowQueueState: 'running', stage: 'scraping' });
 }
 
 export const cancelRunning = internalMutation({
@@ -262,8 +300,19 @@ export const cancelRunning = internalMutation({
   returns: v.null(),
   handler: async (ctx, { digestId }) => {
     const digest = await ctx.db.get('digests', digestId);
-    if (digest?.status === 'running' && digest.workflowId) {
-      await cancelWorkflow(ctx, components.workflow, digest.workflowId as WorkflowId);
+    if (digest?.status === 'running') {
+      if (digest.workflowId) {
+        await cancelWorkflow(ctx, components.workflow, digest.workflowId as WorkflowId);
+      } else if (digest.workflowQueueState === 'queued') {
+        await ctx.db.patch('digests', digestId, {
+          status: 'failed',
+          stage: 'done',
+          workflowQueueState: undefined,
+          completedAt: Date.now(),
+          failureCode: 'WORKFLOW_CANCELED',
+        });
+        await startNextDigest(ctx);
+      }
     }
     return null;
   },
@@ -474,7 +523,11 @@ export const getPostsForClassification = internalQuery({
     if (digest === null || digest.status !== 'running') {
       throw new Error('DIGEST_NOT_RUNNING');
     }
-    return { userTokenIdentifier: digest.userTokenIdentifier, classificationPrompt: digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts: existingPosts };
+    return {
+      userTokenIdentifier: digest.userTokenIdentifier,
+      classificationPrompt: digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
+      posts: existingPosts,
+    };
   },
 });
 
@@ -495,7 +548,9 @@ export const applyClassifications = internalMutation({
     if (digest === null || digest.status !== 'running') {
       throw new Error('DIGEST_NOT_RUNNING');
     }
-    const allowedCategories = new Set(classificationCategoryIds(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT));
+    const allowedCategories = new Set(
+      classificationCategoryIds(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT),
+    );
     if (classifications.some(({ category }) => !allowedCategories.has(category))) {
       throw new Error('INVALID_CLASSIFICATION_CATEGORY');
     }
@@ -611,10 +666,12 @@ export const getDigestEmailPayload = internalQuery({
       classificationPrompt: digest.classificationPrompt,
       classificationFallbackCount: digest.classificationFallbackCount,
       failedServices: digest.serviceResults.filter(({ status }) => status === 'failed').map(({ service }) => service),
-      posts: await Promise.all(posts.map(async (post) => ({
-        ...post,
-        imageUrl: post.imageStorageIds[0] === undefined ? null : await ctx.storage.getUrl(post.imageStorageIds[0]),
-      }))),
+      posts: await Promise.all(
+        posts.map(async (post) => ({
+          ...post,
+          imageUrl: post.imageStorageIds[0] === undefined ? null : await ctx.storage.getUrl(post.imageStorageIds[0]),
+        })),
+      ),
     });
     return {
       kind: 'send',
@@ -640,7 +697,12 @@ export const markDigestEmailSkipped = internalMutation({
 });
 
 export const markDigestEmailSent = internalMutation({
-  args: { digestId: v.id('digests'), messageId: v.string(), threadId: v.optional(v.string()), inboxId: v.optional(v.string()) },
+  args: {
+    digestId: v.id('digests'),
+    messageId: v.string(),
+    threadId: v.optional(v.string()),
+    inboxId: v.optional(v.string()),
+  },
   returns: v.null(),
   handler: async (ctx, { digestId, messageId, threadId, inboxId }) => {
     await ctx.db.patch('digests', digestId, {
@@ -683,7 +745,11 @@ export const handleWorkflowComplete = internalMutation({
         failureCode: result.kind === 'canceled' ? 'WORKFLOW_CANCELED' : 'WORKFLOW_FAILED',
       });
     }
+    if (digest !== null) {
+      await ctx.db.patch('digests', context.digestId, { workflowQueueState: undefined });
+    }
     await cleanup(ctx, components.workflow, workflowId);
+    await startNextDigest(ctx);
     return null;
   },
 });
