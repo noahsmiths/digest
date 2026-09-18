@@ -85,7 +85,12 @@ export function DigestPage({
                     aria-current={currentDigestId === digest._id ? 'true' : undefined}
                   >
                     <span className="history-date">{formatDate(digest._creationTime)}</span>
-                    <span className="history-meta">{statusLabel(digest.status)} <span aria-hidden="true">·</span> {digest.postCount} posts</span>
+                    <span className="history-meta">
+                      {statusLabel(digest.status)}
+                      {(digest.status === 'completed' || digest.status === 'partial') && (
+                        <> <span aria-hidden="true">·</span> {digest.postCount} posts</>
+                      )}
+                    </span>
                   </Link>
                 </li>
               ))}

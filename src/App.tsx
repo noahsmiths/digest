@@ -175,17 +175,18 @@ function SignedInApp({ page }: { page: Page }) {
     }
   };
 
-  const savePreferences = async ({ automaticDigestEnabled, deliveryTime }: { automaticDigestEnabled: boolean; deliveryTime: string }) => {
+  const savePreferences = async ({ automaticDigestEnabled, emailAfterDigestEnabled, deliveryTime }: { automaticDigestEnabled: boolean; emailAfterDigestEnabled: boolean; deliveryTime: string }) => {
     setError(null);
     try {
       await updatePreferences({
         automaticDigestEnabled,
+        emailAfterDigestEnabled,
         deliveryTime,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       });
     } catch (cause) {
-      console.error('Failed to save delivery settings:', cause);
-      setError('Could not save your delivery settings. Try again.');
+      console.error('Failed to save email settings:', cause);
+      throw cause;
     }
   };
 

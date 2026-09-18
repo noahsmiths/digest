@@ -46,6 +46,7 @@ export default defineSchema({
     userId: v.id('users'),
     userTokenIdentifier: v.optional(v.string()),
     automaticDigestEnabled: v.boolean(),
+    emailAfterDigestEnabled: v.optional(v.boolean()),
     deliveryTime: v.string(),
     timeZone: v.string(),
     nextDeliveryAt: v.number(),
@@ -70,6 +71,7 @@ export default defineSchema({
     .index('by_firecrawlProfileName', ['firecrawlProfileName']),
   digests: defineTable({
     userTokenIdentifier: v.string(),
+    source: v.optional(v.union(v.literal('manual'), v.literal('scheduled'))),
     status: digestStatusValidator,
     stage: digestStageValidator,
     maxPostsPerService: v.number(),

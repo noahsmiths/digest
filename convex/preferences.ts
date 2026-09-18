@@ -10,6 +10,7 @@ const MAX_DUE_PREFERENCES = 100;
 
 const preferencesValidator = v.object({
   automaticDigestEnabled: v.boolean(),
+  emailAfterDigestEnabled: v.boolean(),
   deliveryTime: v.string(),
   timeZone: v.string(),
   classificationPrompt: v.string(),
@@ -75,9 +76,10 @@ export const get = query({
       .withIndex('by_userId', (q) => q.eq('userId', userId))
       .first();
     return preferences === null
-      ? { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone: DEFAULT_TIME_ZONE, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT }
+      ? { automaticDigestEnabled: true, emailAfterDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone: DEFAULT_TIME_ZONE, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT }
       : {
           automaticDigestEnabled: preferences.automaticDigestEnabled,
+          emailAfterDigestEnabled: preferences.emailAfterDigestEnabled ?? true,
           deliveryTime: preferences.deliveryTime,
           timeZone: preferences.timeZone,
           classificationPrompt: preferences.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
@@ -107,6 +109,7 @@ export const ensure = mutation({
         });
         return {
           automaticDigestEnabled: existing.automaticDigestEnabled,
+          emailAfterDigestEnabled: existing.emailAfterDigestEnabled ?? true,
           deliveryTime: existing.deliveryTime,
           timeZone,
           classificationPrompt: existing.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
@@ -114,6 +117,7 @@ export const ensure = mutation({
       }
       return {
         automaticDigestEnabled: existing.automaticDigestEnabled,
+        emailAfterDigestEnabled: existing.emailAfterDigestEnabled ?? true,
         deliveryTime: existing.deliveryTime,
         timeZone: existing.timeZone,
         classificationPrompt: existing.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT,
@@ -124,18 +128,19 @@ export const ensure = mutation({
       userId,
       userTokenIdentifier: identity.tokenIdentifier,
       automaticDigestEnabled: true,
+      emailAfterDigestEnabled: true,
       deliveryTime: DEFAULT_DELIVERY_TIME,
       timeZone,
       nextDeliveryAt: next,
     });
-    return { automaticDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT };
+    return { automaticDigestEnabled: true, emailAfterDigestEnabled: true, deliveryTime: DEFAULT_DELIVERY_TIME, timeZone, classificationPrompt: DEFAULT_CLASSIFICATION_PROMPT };
   },
 });
 
 export const update = mutation({
   args: preferencesValidator.omit('classificationPrompt'),
   returns: v.null(),
-  handler: async (ctx, { automaticDigestEnabled, deliveryTime, timeZone }) => {
+  handler: async (ctx, { automaticDigestEnabled, emailAfterDigestEnabled, deliveryTime, timeZone }) => {
     const identity = await getIdentityOrThrow(ctx);
     const userId = ctx.db.normalizeId('users', identity.subject);
     if (userId === null) throw new Error('USER_NOT_FOUND');
@@ -148,6 +153,7 @@ export const update = mutation({
       userId,
       userTokenIdentifier: identity.tokenIdentifier,
       automaticDigestEnabled,
+      emailAfterDigestEnabled,
       deliveryTime,
       timeZone,
       nextDeliveryAt: next,

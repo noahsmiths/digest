@@ -209,13 +209,14 @@ export const startForUser = internalMutation({
   },
   returns: v.union(v.id('digests'), v.null()),
   handler: async (ctx, { userTokenIdentifier, userId }) =>
-    await startDigestForUser(ctx, userTokenIdentifier, userId),
+    await startDigestForUser(ctx, userTokenIdentifier, userId, 'scheduled'),
 });
 
 async function startDigestForUser(
   ctx: MutationCtx,
   userTokenIdentifier: string,
   userId: Id<'users'> | null,
+  source: 'manual' | 'scheduled' = 'manual',
 ): Promise<Id<'digests'> | null> {
   const user = userId === null ? null : await ctx.db.get('users', userId);
   const activeDigest = await ctx.db
@@ -225,6 +226,7 @@ async function startDigestForUser(
     )
     .first();
   if (activeDigest !== null) {
+    if (source === 'scheduled') await ctx.db.patch('digests', activeDigest._id, { source });
     return activeDigest._id;
   }
 
@@ -244,6 +246,7 @@ async function startDigestForUser(
     .first();
   const digestId = await ctx.db.insert('digests', {
     userTokenIdentifier,
+    source,
     status: 'running',
     stage: 'queued',
     workflowQueueState: 'queued',
@@ -642,6 +645,14 @@ export const getDigestEmailPayload = internalQuery({
     const digest = await ctx.db.get('digests', digestId);
     if (digest === null || (digest.status !== 'completed' && digest.status !== 'partial')) {
       return { kind: 'skip', failureCode: 'DIGEST_NOT_READY' };
+    }
+    if (digest.source !== 'scheduled') {
+      const preferences = await ctx.db.query('userPreferences')
+        .withIndex('by_userTokenIdentifier', (q) => q.eq('userTokenIdentifier', digest.userTokenIdentifier))
+        .first();
+      if (preferences?.emailAfterDigestEnabled === false) {
+        return { kind: 'skip', failureCode: 'DIGEST_EMAIL_DISABLED' };
+      }
     }
     if (digest.recipientEmail === undefined) {
       return { kind: 'skip', failureCode: 'NO_RECIPIENT_EMAIL' };

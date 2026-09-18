@@ -5,10 +5,13 @@ import { classificationPromptError, DEFAULT_CLASSIFICATION_PROMPT, parseClassifi
 
 type Preferences = {
   automaticDigestEnabled: boolean;
+  emailAfterDigestEnabled: boolean;
   deliveryTime: string;
   timeZone: string;
   classificationPrompt: string;
 };
+
+type EmailPreferences = Pick<Preferences, 'automaticDigestEnabled' | 'emailAfterDigestEnabled' | 'deliveryTime'>;
 
 type SettingsSection = 'connections' | 'rules' | 'delivery';
 
@@ -42,7 +45,7 @@ export function SettingsPage({
   onDisconnect: (service: Service) => Promise<void>;
   onSave: () => Promise<void>;
   onCancel: () => Promise<void>;
-  onSavePreferences: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
+  onSavePreferences: (preferences: EmailPreferences) => Promise<void>;
   onSaveClassificationPrompt: (prompt: string) => Promise<void>;
   onDigest: () => void;
 }) {
@@ -56,7 +59,7 @@ export function SettingsPage({
           {([
             ['connections', 'Connections'],
             ['rules', 'Digest Categories'],
-            ['delivery', 'Daily Delivery'],
+            ['delivery', 'Emails'],
           ] as const).map(([section, label]) => (
             <button
               className="settings-nav-link"
@@ -126,8 +129,8 @@ export function SettingsPage({
           </div>
 
           <div className="settings-pane settings-sheet letter-sheet" hidden={activeSection !== 'delivery'}>
-            <DailyDeliverySettings
-              key={`${preferences.automaticDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
+            <EmailSettings
+              key={`${preferences.automaticDigestEnabled}-${preferences.emailAfterDigestEnabled}-${preferences.deliveryTime}-${preferences.timeZone}`}
               preferences={preferences}
               onSave={onSavePreferences}
             />
@@ -233,53 +236,91 @@ function ClassificationSettings({ prompt, onSave }: { prompt: string; onSave: (p
   );
 }
 
-function DailyDeliverySettings({
+function EmailSettings({
   preferences,
   onSave,
 }: {
   preferences: Preferences;
-  onSave: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
+  onSave: (preferences: EmailPreferences) => Promise<void>;
 }) {
-  const [automaticDigestEnabled, setAutomaticDigestEnabled] = useState(preferences.automaticDigestEnabled);
-  const [deliveryTime, setDeliveryTime] = useState(preferences.deliveryTime);
+  const [draft, setDraft] = useState<EmailPreferences>({
+    automaticDigestEnabled: preferences.automaticDigestEnabled,
+    emailAfterDigestEnabled: preferences.emailAfterDigestEnabled,
+    deliveryTime: preferences.deliveryTime,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const updateAutomaticDigest = (enabled: boolean) => {
-    setAutomaticDigestEnabled(enabled);
-    void onSave({ automaticDigestEnabled: enabled, deliveryTime });
-  };
-
-  const updateDeliveryTime = (time: string) => {
-    setDeliveryTime(time);
-    void onSave({ automaticDigestEnabled, deliveryTime: time });
+  const updatePreferences = async (updates: Partial<EmailPreferences>) => {
+    const next = { ...draft, ...updates };
+    setDraft(next);
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSave(next);
+    } catch {
+      setDraft(draft);
+      setSaveError('Could not save your email settings. Try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <section className="delivery-settings" aria-labelledby="delivery-settings-title">
+    <section className="email-settings" aria-labelledby="email-settings-title">
       <div className="delivery-settings-heading">
-        <h2 id="delivery-settings-title">Daily delivery</h2>
-        <p>A new digest is automatically created at your selected time and emailed to you.</p>
+        <h2 id="email-settings-title">Emails</h2>
+        <p>Choose when digests arrive in your inbox.</p>
       </div>
-      <label className="delivery-switch">
-        <input
-          type="checkbox"
-          checked={automaticDigestEnabled}
-          onChange={(event) => updateAutomaticDigest(event.target.checked)}
-        />
-        <span className="delivery-switch-control" aria-hidden="true"><span /></span>
-        <span>
-          <strong>Automatically make my digest every day</strong>
-        </span>
-      </label>
-      <label className="delivery-time-field">
-        <span>Delivery time</span>
-        <input
-          type="time"
-          value={deliveryTime}
-          disabled={!automaticDigestEnabled}
-          onChange={(event) => updateDeliveryTime(event.target.value)}
-        />
-        <small>Your local time zone: {preferences.timeZone}</small>
-      </label>
+      <section className="delivery-settings" aria-labelledby="delivery-settings-title">
+        <div className="delivery-settings-heading">
+          <h3 id="delivery-settings-title">Daily delivery</h3>
+          <p>A new digest is automatically created at your selected time and emailed to you.</p>
+        </div>
+        <label className="delivery-switch">
+          <input
+            type="checkbox"
+            checked={draft.automaticDigestEnabled}
+            disabled={isSaving}
+            onChange={(event) => void updatePreferences({ automaticDigestEnabled: event.target.checked })}
+          />
+          <span className="delivery-switch-control" aria-hidden="true"><span /></span>
+          <span>
+            <strong>Automatically make my digest every day</strong>
+          </span>
+        </label>
+        <label className="delivery-time-field">
+          <span>Delivery time</span>
+          <input
+            type="time"
+            value={draft.deliveryTime}
+            disabled={!draft.automaticDigestEnabled || isSaving}
+            onChange={(event) => void updatePreferences({ deliveryTime: event.target.value })}
+          />
+          <small>Your local time zone: {preferences.timeZone}</small>
+        </label>
+      </section>
+      <section className="delivery-settings" aria-labelledby="digest-email-settings-title">
+        <div className="delivery-settings-heading">
+          <h3 id="digest-email-settings-title">After digest creation</h3>
+          <p>Receive an email when a digest you make finishes, too.</p>
+        </div>
+        <label className="delivery-switch">
+          <input
+            type="checkbox"
+            checked={draft.emailAfterDigestEnabled}
+            disabled={isSaving}
+            onChange={(event) => void updatePreferences({ emailAfterDigestEnabled: event.target.checked })}
+          />
+          <span className="delivery-switch-control" aria-hidden="true"><span /></span>
+          <span>
+            <strong>Email me after every digest</strong>
+            <small>When off, only scheduled daily digests are emailed. If daily delivery is also off, no digest emails are sent.</small>
+          </span>
+        </label>
+      </section>
+      {saveError !== null && <p role="alert" className="inline-alert error-alert">{saveError}</p>}
+      <p className="classification-status" role="status">{isSaving ? 'Saving…' : ''}</p>
     </section>
   );
 }
