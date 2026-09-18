@@ -38,6 +38,7 @@ function ExampleLetter() {
   const [section, setSection] = useState<Category>('social');
   const [imageOpen, setImageOpen] = useState(false);
   const letterRef = useRef<HTMLDivElement>(null);
+  const passagesRef = useRef<HTMLDivElement>(null);
   const postsByCategory = {
     social: [
       { author: 'Maya Chen', service: 'Instagram', body: 'community garden beds are finally taking shape!! come by for the planting day this Sunday.', image: '/sample-garden.jpg' },
@@ -52,9 +53,13 @@ function ExampleLetter() {
     setSection(next);
     const scroller = letterRef.current;
     const target = document.getElementById(`example-${next}`);
-    if (!scroller || !target) return;
+    const passages = passagesRef.current;
+    if (!scroller || !target || !passages) return;
+    passages.style.setProperty('--digest-trailing-space', '0px');
     const inset = Number.parseFloat(getComputedStyle(target).scrollMarginTop);
-    scroller.scrollTo({ top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset, behavior: 'smooth' });
+    const targetTop = scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset;
+    passages.style.setProperty('--digest-trailing-space', `${Math.max(0, targetTop - (scroller.scrollHeight - scroller.clientHeight))}px`);
+    scroller.scrollTo({ top: targetTop, behavior: 'smooth' });
   };
 
   return (
@@ -74,7 +79,7 @@ function ExampleLetter() {
             </button>
           ))}
         </nav>
-        <div className="digest-passages">
+        <div className="digest-passages" ref={passagesRef}>
           {categories.map((category) => (
             <section id={`example-${category.id}`} className="digest-section" key={category.id}>
               <div className="digest-section-heading">

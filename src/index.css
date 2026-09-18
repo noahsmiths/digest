@@ -180,7 +180,7 @@ svg { display: block; }
 .digest-index { position: sticky; top: 0; align-self: start; max-height: max(44px, calc(100dvh - 240px)); margin-top: calc(-1 * var(--space-group)); overflow: auto; overscroll-behavior: contain; }
 .digest-index .index-link { transform: translateY(-5px); }
 .digest-index .index-link > span:last-child { display: inline-block; transform: translateY(-2px); }
-.digest-passages { min-width: 0; padding-top: 12px; }
+.digest-passages { min-width: 0; padding: 12px 0 var(--digest-trailing-space, 0px); }
 .digest-section { scroll-margin-top: 24px; }
 .digest-section + .digest-section { margin-top: 32px; }
 .digest-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-group); padding-bottom: 17px; border-bottom: 1px solid var(--ink); }

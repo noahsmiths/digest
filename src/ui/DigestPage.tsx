@@ -124,6 +124,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
   const groupedPosts = useMemo(() => Object.fromEntries(categories.map(({ id }) => [id, posts.filter(({ category }) => category === id)])), [categories, posts]);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
   const detailRef = useRef<HTMLDivElement>(null);
+  const passagesRef = useRef<HTMLDivElement>(null);
   const failedServices = digest.serviceResults.filter(({ status }) => status === 'failed');
   const completedServices = digest.serviceResults.filter(({ status }) => status !== 'pending').length;
 
@@ -156,9 +157,13 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
     setActiveCategory(category);
     const scroller = detailRef.current?.closest<HTMLElement>('.reading-sheet');
     const section = document.getElementById(`digest-${encodeURIComponent(category)}`);
-    if (!scroller || !section) return;
+    const passages = passagesRef.current;
+    if (!scroller || !section || !passages) return;
+    passages.style.setProperty('--digest-trailing-space', '0px');
     const inset = Number.parseFloat(getComputedStyle(section).scrollMarginTop);
-    scroller.scrollTo({ top: scroller.scrollTop + section.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    const targetTop = scroller.scrollTop + section.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset;
+    passages.style.setProperty('--digest-trailing-space', `${Math.max(0, targetTop - (scroller.scrollHeight - scroller.clientHeight))}px`);
+    scroller.scrollTo({ top: targetTop, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
 
   return (
@@ -190,7 +195,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
             ))}
           </nav>
 
-          <div className="digest-passages">
+          <div className="digest-passages" ref={passagesRef}>
             {categories.map((category) => (
               <section className="digest-section" id={`digest-${encodeURIComponent(category.id)}`} key={category.id}>
                 <div className="digest-section-heading">
@@ -204,6 +209,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
                 )}
               </section>
             ))}
+            <p className="digest-end">All caught up!</p>
           </div>
         </div>
       )}
