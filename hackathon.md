@@ -2,17 +2,17 @@
 
 - **Project:** digest
 - **Event:** Convex All Gas Hackathon
-- **What it does:** An authenticated Convex + React app that turns Instagram, X, and LinkedIn feeds into durable, categorized digests while preserving the original post content and images.
+- **What it does:** An authenticated Convex + React app that turns Instagram, X, and LinkedIn feeds into durable, categorized digests with customizable category rules and scheduled email delivery, while preserving the original post content and images.
 - **Live app:** not deployed
 - **Repo:** https://github.com/noahsmiths/digest
 - **Frontend:** not deployed
 - **Convex deployment:** not deployed
-- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features
-- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, paginated queries, file storage, durable workflows
+- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features; AgentMail sends digest emails, receives and fetches replies for category/rule updates, and sends confirmations through its Node SDK because its Convex component was broken during our build
+- **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, paginated queries, file storage, durable workflows, crons, HTTP actions, scheduled functions
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-13T05:33:11Z
+- **Last updated:** 2026-09-18T04:52:06Z
 
 ## Log
 
@@ -78,3 +78,79 @@ views; registered the Agent and Workflow components (`convex/digest`,
 `convex/digests.ts`, `convex/schema.ts`, `convex/convex.config.ts`, `src/App.tsx`).
 Firecrawl remains a direct SDK integration because its Convex component does not
 cover the Browser API features this app needs (`convex/scraping/shared.ts`).
+
+### 2026-09-14 - 40e8fd5
+
+Reused a Firecrawl browser session across service scrapes, added retries and
+content filtering, and narrowed digest selection to social updates and upcoming
+events. Added mutual-connection metadata and removed dropped posts and unused
+images (`convex/scraping/shared.ts`, `convex/digest/actions.ts`,
+`convex/digest/classification.ts`, `convex/digests.ts`, `convex/schema.ts`).
+
+### 2026-09-16 - 1c689c2
+
+Improved feed extraction and mutual-connection detection across the platforms.
+Added AgentMail digest delivery with idempotent sends, saved message IDs, and
+delivery status (`convex/scraping`, `convex/digest/email.ts`, `convex/digests.ts`).
+Used AgentMail's Node SDK because its Convex component was broken during our
+build (builder-reported; SDK use is confirmed in the email action).
+
+### 2026-09-16 - ca6cb0e
+
+Redesigned the app around a landing page, digest reading/history, and service
+connections. Added a shared app shell, updated sign-in, and made original post
+text the focus with compact image browsing (`src/App.tsx`, `src/ui`,
+`src/auth/AuthForm.tsx`, `src/index.css`).
+
+### 2026-09-16 - 34a48d8
+
+Added daily digest generation and email delivery at the user's selected time
+and time zone. Persisted delivery preferences and used a Convex cron to start
+due digests; expanded service settings into a settings page
+(`convex/preferences.ts`, `convex/crons.ts`, `convex/users.ts`,
+`convex/digests.ts`, `src/ui/SettingsPage.tsx`).
+
+### 2026-09-16 - f17b1ed
+
+Made category names and classification rules customizable in settings. Saved
+user preferences and applied them to new digest classifications and category
+views (`shared/classificationPrompt.ts`, `convex/preferences.ts`,
+`convex/digest/classification.ts`, `convex/digests.ts`,
+`src/ui/SettingsPage.tsx`, `src/ui/DigestPage.tsx`).
+
+### 2026-09-17 - 9e1caba
+
+Added a shared modal for sign-in and service connection flows, plus a post
+image viewer (`src/ui/Modal.tsx`, `src/auth/AuthForm.tsx`,
+`src/ui/SettingsPage.tsx`, `src/ui/DigestPage.tsx`).
+
+### 2026-09-17 - e6a44ad
+
+Added signed AgentMail webhooks and sender/thread checks to route authorized
+email replies into a durable preference-update workflow. The Node SDK fetches
+the reply, GPT-5 edits category rules through the Agent component, and AgentMail
+sends a confirmation in the same thread; saved inbox/thread IDs support routing
+(`convex/http.ts`, `convex/emailReplies.ts`, `convex/digest/replyActions.ts`,
+`convex/digest/replyWorkflow.ts`, `convex/digest/email.ts`).
+
+### 2026-09-17 - 80d9c8c
+
+Replaced query-parameter navigation with routed pages and updated digest email
+links to use the new paths. Added a frontend fallback for direct page requests
+(`src/App.tsx`, `src/main.tsx`, `shared/routes.ts`, `convex/digests.ts`,
+`public/_redirects`).
+
+### 2026-09-18 - fc8c7dc
+
+Refined the landing, digest, and settings layouts. Made the landing-page digest
+demo interactive and fixed scrolling in the demo and digest reader
+(`src/ui/LandingPage.tsx`, `src/ui/DigestPage.tsx`,
+`src/ui/SettingsPage.tsx`, `src/index.css`).
+
+### 2026-09-18 - 566064b
+
+Added digest deletion with cleanup of posts, images, workflows, and associated
+email-reply agent threads (`convex/digests.ts`, `src/ui/DigestPage.tsx`).
+Improved service connection controls with explicit completion and cancellation;
+cancelling closes the Firecrawl browser and removes the pending session
+(`convex/login/node.ts`, `src/App.tsx`, `src/ui/SettingsPage.tsx`).
