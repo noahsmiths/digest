@@ -102,7 +102,13 @@ export default defineSchema({
     confirmationMessageId: v.optional(v.string()),
     failureCode: v.optional(v.string()),
     workflowId: v.optional(v.string()),
-  }).index('by_inboxId_and_messageId', ['inboxId', 'messageId']),
+  })
+    .index('by_inboxId_and_messageId', ['inboxId', 'messageId'])
+    .index('by_digestId', ['digestId']),
+  digestAssets: defineTable({
+    digestId: v.id('digests'),
+    storageId: v.id('_storage'),
+  }).index('by_digestId', ['digestId']),
   digestPosts: defineTable({
     digestId: v.id('digests'),
     service: serviceValidator,

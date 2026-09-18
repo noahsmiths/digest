@@ -1,6 +1,6 @@
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { ArrowIcon } from './Chrome';
@@ -61,7 +61,7 @@ export function DigestPage({
             disabled={linkedServices.length === 0 || isStartingDigest || activeDigest !== undefined}
             onClick={() => void onGenerate()}
           >
-            {isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new digest'}
+            <span>{isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new digest'}</span>
             {activeDigest === undefined && <ArrowIcon />}
           </button>
           <div className="history-heading">
@@ -101,9 +101,8 @@ export function DigestPage({
 
         <section className="reading-sheet letter-sheet" aria-label="Selected digest" tabIndex={0}>
           {currentDigestId === null ? (
-            <div className="digest-empty">
-              <h2>A little less noise starts here.</h2>
-              <p>Make a digest to gather the useful posts from your connected feeds into a read you can finish.</p>
+            <div className="digest-empty digest-empty-placeholder">
+              <h2>No digests yet. Create one now!</h2>
               {linkedServices.length > 0 && <button className="text-action" type="button" onClick={() => void onGenerate()}>Make your first digest <ArrowIcon /></button>}
             </div>
           ) : selectedDigest === undefined ? (
@@ -120,16 +119,52 @@ export function DigestPage({
 }
 
 function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: DigestData['posts'] }) {
+  const removeDigest = useMutation(api.digests.remove);
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const categories = useMemo(() => digestCategories(digest.classificationPrompt ?? DEFAULT_CLASSIFICATION_PROMPT, posts.map(({ category }) => category)), [digest.classificationPrompt, posts]);
   const groupedPosts = useMemo(() => Object.fromEntries(categories.map(({ id }) => [id, posts.filter(({ category }) => category === id)])), [categories, posts]);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
   const detailRef = useRef<HTMLDivElement>(null);
   const passagesRef = useRef<HTMLDivElement>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   const failedServices = digest.serviceResults.filter(({ status }) => status === 'failed');
   const completedServices = digest.serviceResults.filter(({ status }) => status !== 'pending').length;
+  const isReadable = digest.status === 'completed' || digest.status === 'partial';
+
+  const deleteDigest = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await removeDigest({ digestId: digest._id });
+      await navigate('/digest', { replace: true });
+    } catch (cause) {
+      console.error('Failed to delete digest:', cause);
+      setDeleteError('Could not delete this digest. Please try again.');
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
-    detailRef.current?.closest<HTMLElement>('.reading-sheet')?.scrollTo({ top: 0, behavior: 'instant' });
+    const scroller = detailRef.current?.closest<HTMLElement>('.reading-sheet');
+    scroller?.scrollTo({ top: 0, behavior: 'instant' });
+    const cancelScroll = () => {
+      if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current);
+      scrollFrameRef.current = null;
+    };
+    scroller?.addEventListener('wheel', cancelScroll, { passive: true });
+    scroller?.addEventListener('touchstart', cancelScroll, { passive: true });
+    scroller?.addEventListener('pointerdown', cancelScroll, { passive: true });
+    scroller?.addEventListener('keydown', cancelScroll);
+    return () => {
+      cancelScroll();
+      scroller?.removeEventListener('wheel', cancelScroll);
+      scroller?.removeEventListener('touchstart', cancelScroll);
+      scroller?.removeEventListener('pointerdown', cancelScroll);
+      scroller?.removeEventListener('keydown', cancelScroll);
+    };
   }, [digest._id]);
 
   useEffect(() => {
@@ -163,7 +198,21 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
     const inset = Number.parseFloat(getComputedStyle(section).scrollMarginTop);
     const targetTop = scroller.scrollTop + section.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset;
     passages.style.setProperty('--digest-trailing-space', `${Math.max(0, targetTop - (scroller.scrollHeight - scroller.clientHeight))}px`);
-    scroller.scrollTo({ top: targetTop, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current);
+    scrollFrameRef.current = null;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      scroller.scrollTo({ top: targetTop, behavior: 'instant' });
+      return;
+    }
+    const startTop = scroller.scrollTop;
+    const distance = Math.max(0, targetTop) - startTop;
+    const startedAt = performance.now();
+    const animateScroll = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / 180);
+      scroller.scrollTo({ top: startTop + distance * (1 - (1 - progress) ** 3), behavior: 'instant' });
+      scrollFrameRef.current = progress < 1 ? requestAnimationFrame(animateScroll) : null;
+    };
+    scrollFrameRef.current = requestAnimationFrame(animateScroll);
   };
 
   return (
@@ -178,40 +227,59 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
       {digest.classificationFallbackCount > 0 && <p className="inline-alert warning-alert">{digest.classificationFallbackCount} posts were omitted because they could not be categorized.</p>}
       {digest.status === 'failed' && <p className="inline-alert error-alert">This digest could not finish. Check your connections, then make another.</p>}
 
-      {(digest.status === 'completed' || digest.status === 'partial') && (
-        <div className="digest-letter-body">
-          <nav className="digest-index" aria-label="Digest sections">
-            <span className="index-title">Sections</span>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                className={activeCategory === category.id ? 'index-link active' : 'index-link'}
-                aria-current={activeCategory === category.id ? 'true' : undefined}
-                onClick={() => chooseCategory(category.id)}
-              >
-                <span>{category.name}</span><span>{groupedPosts[category.id].length}</span>
-              </button>
-            ))}
-          </nav>
+      <div className="digest-letter-body">
+        <nav className="digest-index" aria-label={isReadable ? 'Digest sections' : 'Digest actions'}>
+          {isReadable && <span className="index-title">Sections</span>}
+          {isReadable && categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={activeCategory === category.id ? 'index-link active' : 'index-link'}
+              aria-current={activeCategory === category.id ? 'true' : undefined}
+              onClick={() => chooseCategory(category.id)}
+            >
+              <span>{category.name}</span><span>{groupedPosts[category.id].length}</span>
+            </button>
+          ))}
+          <button
+            className="digest-delete-action"
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => { setDeleteError(null); setDeleteOpen(true); }}
+          >
+            Delete digest
+          </button>
+        </nav>
 
-          <div className="digest-passages" ref={passagesRef}>
-            {categories.map((category) => (
-              <section className="digest-section" id={`digest-${encodeURIComponent(category.id)}`} key={category.id}>
-                <div className="digest-section-heading">
-                  <h3>{category.name}</h3>
-                  <p>{groupedPosts[category.id].length} {groupedPosts[category.id].length === 1 ? 'post' : 'posts'}</p>
-                </div>
-                {groupedPosts[category.id].length === 0 ? (
-                  <p className="section-empty">Nothing in this section this time.</p>
-                ) : (
-                  groupedPosts[category.id].map((post) => <DigestPost key={post._id} post={post} />)
-                )}
-              </section>
-            ))}
-            <p className="digest-end">All caught up!</p>
+        {isReadable && <div className="digest-passages" ref={passagesRef}>
+          {categories.map((category) => (
+            <section className="digest-section" id={`digest-${encodeURIComponent(category.id)}`} key={category.id}>
+              <div className="digest-section-heading">
+                <h3>{category.name}</h3>
+                <p>{groupedPosts[category.id].length} {groupedPosts[category.id].length === 1 ? 'post' : 'posts'}</p>
+              </div>
+              {groupedPosts[category.id].length === 0 ? (
+                <p className="section-empty">Nothing in this section this time.</p>
+              ) : (
+                groupedPosts[category.id].map((post) => <DigestPost key={post._id} post={post} />)
+              )}
+            </section>
+          ))}
+          <p className="digest-end">All caught up!</p>
+        </div>}
+      </div>
+      {deleteOpen && (
+        <Modal className="delete-digest-modal" label="Delete digest" onClose={() => { if (!isDeleting) setDeleteOpen(false); }}>
+          <h2>Delete this digest?</h2>
+          <p>The digest from {formatDate(digest._creationTime)} and all its posts, images, and related data will be permanently deleted. This cannot be undone.</p>
+          {deleteError !== null && <p role="alert" className="inline-alert error-alert">{deleteError}</p>}
+          <div className="delete-digest-actions" aria-busy={isDeleting}>
+            <button className="small-action" type="button" disabled={isDeleting} onClick={() => setDeleteOpen(false)}>Cancel</button>
+            <button className="primary-action danger-action" type="button" disabled={isDeleting} onClick={() => void deleteDigest()}>
+              {isDeleting ? 'Deleting…' : 'Delete'}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

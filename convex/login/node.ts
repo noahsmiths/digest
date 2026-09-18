@@ -3,7 +3,7 @@
 import { v } from 'convex/values';
 import { action, env } from '../_generated/server';
 import { getIdentityOrThrow } from '../utilities/auth';
-import Firecrawl from 'firecrawl';
+import Firecrawl, { SdkError } from 'firecrawl';
 import { serviceToLoginURL, serviceToLogoutURL } from '../utilities/sites';
 import { internal } from '../_generated/api';
 import { serviceValidator } from '../schema';
@@ -86,6 +86,31 @@ export const completeLoginSession = action({
       userTokenIdentifier: identity.tokenIdentifier,
       service: service,
       firecrawlProfileName: existingLoginSession.firecrawlProfileName,
+    });
+    return null;
+  },
+});
+
+export const cancelLoginSession = action({
+  args: { service: serviceValidator },
+  returns: v.null(),
+  handler: async (ctx, { service }) => {
+    const identity = await getIdentityOrThrow(ctx);
+    const session = await ctx.runQuery(internal.login.findExistingLoginSession, {
+      userTokenIdentifier: identity.tokenIdentifier,
+      service,
+    });
+    if (session === null) return null;
+
+    const firecrawl = new Firecrawl({ apiKey: env.FIRECRAWL_API_KEY });
+    try {
+      const result = await firecrawl.deleteBrowser(session.firecrawlSessionID);
+      if (!result.success) throw new Error(`Failed to close login session: ${result.error ?? 'unknown error'}`);
+    } catch (error) {
+      if (!(error instanceof SdkError) || (error.status !== 404 && error.status !== 410)) throw error;
+    }
+    await ctx.runMutation(internal.login.deleteExistingSession, {
+      serviceLoginSessionsDocumentID: session._id,
     });
     return null;
   },

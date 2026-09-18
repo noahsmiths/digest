@@ -39,7 +39,7 @@ function ExampleLetter() {
   const [imageOpen, setImageOpen] = useState(false);
   const letterRef = useRef<HTMLDivElement>(null);
   const passagesRef = useRef<HTMLDivElement>(null);
-  const postsByCategory = {
+  const postsByCategory: Record<Category, { author: string; service: string; body: string; image?: string }[]> = {
     social: [
       { author: 'Maya Chen', service: 'Instagram', body: 'community garden beds are finally taking shape!! come by for the planting day this Sunday.', image: '/sample-garden.jpg' },
       { author: 'Kevin Mitnick', service: 'X (Twitter)', body: 'Wheels down Brooklyn!' },
@@ -47,7 +47,7 @@ function ExampleLetter() {
     event: [
       { author: 'Queens Book Exchange', service: 'Instagram', body: 'We\'re having a neighborhood book swap is happening next Saturday afternoon in Flushing Meadows. Bring some books to swap!!!\n\n#booksareawesome' },
     ],
-  } satisfies Record<Category, { author: string; service: string; body: string; image?: string }[]>;
+  };
 
   const chooseSection = (next: Category) => {
     setSection(next);

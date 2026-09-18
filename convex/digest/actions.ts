@@ -59,7 +59,7 @@ async function scrapeWithRetries(
   let lastError: unknown = null;
   for (let index = 0; index < SERVICE_RETRY_DELAYS.length; index += 1) {
     try {
-      return await runServiceScraperWithProfile(ctx, profileName, maxPosts, scrape);
+      return await runServiceScraperWithProfile(ctx, profileName, maxPosts, scrape, digestId);
     } catch (error) {
       lastError = error;
       console.warn('[digest] scrape attempt failed', { digestId, service, attempt: index + 1, error: errorDetails(error) });

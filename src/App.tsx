@@ -67,6 +67,7 @@ function SignedInApp({ page }: { page: Page }) {
   const startDigest = useMutation(api.digests.start);
   const loginToService = useAction(api.login.node.startLoginSession);
   const completeLogin = useAction(api.login.node.completeLoginSession);
+  const cancelLoginSession = useAction(api.login.node.cancelLoginSession);
   const disconnectService = useAction(api.login.node.disconnectService);
   const preferences = useQuery(api.preferences.get);
   const ensurePreferences = useMutation(api.preferences.ensure);
@@ -78,6 +79,7 @@ function SignedInApp({ page }: { page: Page }) {
   const [activeService, setActiveService] = useState<Service | null>(null);
   const [firecrawlLiveViewURL, setFirecrawlLiveViewURL] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [isStartingDigest, setIsStartingDigest] = useState(false);
   const [pageError, setPageError] = useState<{ pathname: string; message: string } | null>(null);
   const error = pageError?.pathname === pathname ? pageError.message : null;
@@ -144,6 +146,22 @@ function SignedInApp({ page }: { page: Page }) {
     }
   };
 
+  const cancelLogin = async () => {
+    if (activeService === null) return;
+    setIsCancelling(true);
+    setError(null);
+    try {
+      await cancelLoginSession({ service: activeService });
+      setActiveService(null);
+      setFirecrawlLiveViewURL('');
+    } catch (cause) {
+      console.error(`Failed to cancel ${activeService} login:`, cause);
+      setError('Could not close the login session. Try cancelling again.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const generateDigest = async () => {
     setIsStartingDigest(true);
     setError(null);
@@ -192,11 +210,13 @@ function SignedInApp({ page }: { page: Page }) {
           loggingInService={loggingInService}
           disconnectingService={disconnectingService}
           isSaving={isSaving}
+          isCancelling={isCancelling}
           error={error}
           preferences={preferences}
           onConnect={startLogin}
           onDisconnect={disconnectFromService}
           onSave={saveLogin}
+          onCancel={cancelLogin}
           onSavePreferences={savePreferences}
           onSaveClassificationPrompt={async (classificationPrompt) => { await updateClassificationPrompt({ classificationPrompt }); }}
           onDigest={() => navigate('digest')}

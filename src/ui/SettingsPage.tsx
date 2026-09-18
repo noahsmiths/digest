@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowIcon } from './Chrome';
+import { useState } from 'react';
 import { Modal } from './Modal';
 import { serviceName, services, type Service } from './shared';
 import { classificationPromptError, DEFAULT_CLASSIFICATION_PROMPT, parseClassificationPrompt, serializeClassificationPrompt } from '../../shared/classificationPrompt';
@@ -20,14 +19,15 @@ export function SettingsPage({
   loggingInService,
   disconnectingService,
   isSaving,
+  isCancelling,
   error,
   preferences,
   onConnect,
   onDisconnect,
   onSave,
+  onCancel,
   onSavePreferences,
   onSaveClassificationPrompt,
-  onDigest,
 }: {
   linkedServices: Service[];
   activeService: Service | null;
@@ -35,16 +35,19 @@ export function SettingsPage({
   loggingInService: Service | null;
   disconnectingService: Service | null;
   isSaving: boolean;
+  isCancelling: boolean;
   error: string | null;
   preferences: Preferences;
   onConnect: (service: Service) => Promise<void>;
   onDisconnect: (service: Service) => Promise<void>;
   onSave: () => Promise<void>;
+  onCancel: () => Promise<void>;
   onSavePreferences: (preferences: Pick<Preferences, 'automaticDigestEnabled' | 'deliveryTime'>) => Promise<void>;
   onSaveClassificationPrompt: (prompt: string) => Promise<void>;
   onDigest: () => void;
 }) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('connections');
+  const connectionError = error === null ? null : `${error} This is likely because of my low Firecrawl limits but should resolve if you wait a little bit, sorry!`;
 
   return (
     <main className="settings-page page-frame">
@@ -111,10 +114,10 @@ export function SettingsPage({
               })}
             </ul>
 
-            {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
+            {connectionError !== null && <p role="alert" className="inline-alert error-alert">{connectionError}</p>}
 
             {activeService !== null && firecrawlLiveViewURL !== '' && (
-              <ConnectionLogin key={`${activeService}-${firecrawlLiveViewURL}`} service={activeService} url={firecrawlLiveViewURL} isSaving={isSaving} error={error} onSave={onSave} />
+              <ConnectionLogin key={`${activeService}-${firecrawlLiveViewURL}`} service={activeService} url={firecrawlLiveViewURL} isSaving={isSaving} isCancelling={isCancelling} error={connectionError} onSave={onSave} onCancel={onCancel} />
             )}
           </section>
 
@@ -135,34 +138,28 @@ export function SettingsPage({
   );
 }
 
-function ConnectionLogin({ service, url, isSaving, error, onSave }: { service: Service; url: string; isSaving: boolean; error: string | null; onSave: () => Promise<void> }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const resumeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (!isOpen) resumeRef.current?.focus();
-  }, [isOpen]);
+function ConnectionLogin({ service, url, isSaving, isCancelling, error, onSave, onCancel }: { service: Service; url: string; isSaving: boolean; isCancelling: boolean; error: string | null; onSave: () => Promise<void>; onCancel: () => Promise<void> }) {
   return (
-    <>
-      <div className="connection-resume">
-        <p>Your {serviceName(service)} connection is not saved yet.</p>
-        <button ref={resumeRef} className="small-action" type="button" onClick={() => setIsOpen(true)}>Resume connection <ArrowIcon /></button>
-      </div>
-      {isOpen && (
-        <Modal className="connection-modal" label={`Connect ${serviceName(service)}`} onClose={() => setIsOpen(false)}>
-          <div className="connection-login">
-            <div className="connection-login-heading">
-              <h2>Finish connecting {serviceName(service)}</h2>
-              <p>Sign in below, then save the connection when it is complete.</p>
-            </div>
+    <Modal className="connection-modal" label={`Connect ${serviceName(service)}`} onClose={() => { if (!isSaving && !isCancelling) void onCancel(); }}>
+      <div className="connection-login">
+        <div className="connection-login-heading">
+          <h2>Finish connecting {serviceName(service)}</h2>
+          <p>Sign in below, then confirm when you're logged in.</p>
+        </div>
+        <div className="connection-browser-frame">
+          <div className="connection-browser-viewport">
             <iframe src={url} title={`${serviceName(service)} login`} />
-            {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
-            <button className="primary-action" type="button" disabled={isSaving} onClick={() => void onSave()}>
-              {isSaving ? 'Saving connection…' : 'Save connection'} <ArrowIcon />
-            </button>
           </div>
-        </Modal>
-      )}
-    </>
+        </div>
+        {error !== null && <p role="alert" className="inline-alert error-alert">{error}</p>}
+        <div className="connection-login-actions">
+          <button className="small-action" type="button" disabled={isSaving || isCancelling} onClick={() => void onCancel()}>{isCancelling ? 'Cancelling…' : 'Cancel'}</button>
+          <button className="primary-action" type="button" disabled={isSaving || isCancelling} onClick={() => void onSave()}>
+            {isSaving ? 'Saving connection…' : "I'm logged in"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

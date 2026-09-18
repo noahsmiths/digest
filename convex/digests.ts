@@ -16,6 +16,7 @@ const MAX_DIGEST_POSTS = 150;
 const MAX_EMAIL_POSTS_PER_CATEGORY = 3;
 const MAX_EMAIL_POST_LENGTH = 180;
 const serviceOrder: Service[] = ['instagram', 'x', 'linkedin'];
+const DELETE_BATCH_SIZE = 25;
 
 const digestEmailPayloadValidator = v.union(
   v.object({
@@ -107,6 +108,86 @@ export const start = mutation({
       throw new Error('NO_CONNECTED_SERVICES');
     }
     return digestId;
+  },
+});
+
+export const remove = mutation({
+  args: { digestId: v.id('digests') },
+  returns: v.null(),
+  handler: async (ctx, { digestId }) => {
+    const identity = await getIdentityOrThrow(ctx);
+    const digest = await ctx.db.get('digests', digestId);
+    if (digest === null || digest.userTokenIdentifier !== identity.tokenIdentifier) {
+      throw new Error('DIGEST_NOT_FOUND');
+    }
+    if (digest.workflowId !== undefined) {
+      await deleteWorkflow(ctx, digest.workflowId);
+    }
+    await ctx.db.delete('digests', digestId);
+    await deleteRelatedAssets(ctx, digestId);
+    return null;
+  },
+});
+
+async function deleteWorkflow(ctx: MutationCtx, workflowId: string) {
+  if (await cleanup(ctx, components.workflow, workflowId as WorkflowId)) return;
+  try {
+    await cancelWorkflow(ctx, components.workflow, workflowId as WorkflowId);
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('Workflow not found:')) throw error;
+  }
+  await cleanup(ctx, components.workflow, workflowId as WorkflowId);
+}
+
+async function deleteRelatedAssets(ctx: MutationCtx, digestId: Id<'digests'>) {
+  const posts = await ctx.db.query('digestPosts')
+    .withIndex('by_digestId_and_position', (q) => q.eq('digestId', digestId))
+    .take(DELETE_BATCH_SIZE);
+  const assets = await ctx.db.query('digestAssets')
+    .withIndex('by_digestId', (q) => q.eq('digestId', digestId))
+    .take(DELETE_BATCH_SIZE);
+  const replies = await ctx.db.query('emailPreferenceReplies')
+    .withIndex('by_digestId', (q) => q.eq('digestId', digestId))
+    .take(DELETE_BATCH_SIZE);
+  const storageIds = new Set([
+    ...posts.flatMap((post) => post.imageStorageIds),
+    ...assets.map((asset) => asset.storageId),
+  ]);
+  for (const storageId of storageIds) {
+    if (await ctx.db.system.get('_storage', storageId)) await ctx.storage.delete(storageId);
+  }
+  for (const post of posts) await ctx.db.delete('digestPosts', post._id);
+  for (const asset of assets) await ctx.db.delete('digestAssets', asset._id);
+  for (const reply of replies) {
+    if (reply.workflowId !== undefined) await deleteWorkflow(ctx, reply.workflowId);
+    await ctx.runMutation(components.agent.threads.deleteAllForThreadIdAsync, { threadId: reply.agentThreadId, limit: 25 });
+    await ctx.db.delete('emailPreferenceReplies', reply._id);
+  }
+  if ([posts, assets, replies].some((batch) => batch.length === DELETE_BATCH_SIZE)) {
+    await ctx.scheduler.runAfter(0, internal.digests.deleteAssetsBatch, { digestId });
+  }
+}
+
+export const deleteAssetsBatch = internalMutation({
+  args: { digestId: v.id('digests') },
+  returns: v.null(),
+  handler: async (ctx, { digestId }) => {
+    await deleteRelatedAssets(ctx, digestId);
+    return null;
+  },
+});
+
+export const registerAsset = internalMutation({
+  args: { digestId: v.id('digests'), storageId: v.id('_storage') },
+  returns: v.boolean(),
+  handler: async (ctx, { digestId, storageId }) => {
+    const digest = await ctx.db.get('digests', digestId);
+    if (digest === null || digest.status !== 'running') {
+      await ctx.storage.delete(storageId);
+      return false;
+    }
+    await ctx.db.insert('digestAssets', { digestId, storageId });
+    return true;
   },
 });
 
@@ -243,7 +324,10 @@ export const saveScrapedPosts = internalMutation({
   handler: async (ctx, { digestId, service, posts }) => {
     const digest = await ctx.db.get('digests', digestId);
     if (digest === null || digest.status !== 'running') {
-      throw new Error('DIGEST_NOT_RUNNING');
+      for (const storageId of new Set(posts.flatMap((post) => post.images.map((image) => image.storageId)))) {
+        if (await ctx.db.system.get('_storage', storageId)) await ctx.storage.delete(storageId);
+      }
+      return 0;
     }
 
     const existingPosts = await ctx.db

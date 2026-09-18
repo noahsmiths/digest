@@ -3,6 +3,7 @@
 import Firecrawl from 'firecrawl';
 import { chromium } from 'playwright-core';
 import type { ActionCtx } from '../_generated/server';
+import type { Id } from '../_generated/dataModel';
 import { env } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { getIdentityOrThrow } from '../utilities/auth';
@@ -46,7 +47,7 @@ async function downloadImage(session: OpenedBrowserSession, sourceURL: string): 
   return new Blob([new Uint8Array(body)], { type: contentType });
 }
 
-async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts: RawPost[]): Promise<ScrapedPost[]> {
+async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts: RawPost[], digestId?: Id<'digests'>): Promise<ScrapedPost[]> {
   const postsWithContent = posts.filter(hasPostContent);
   const imageCache = new Map<string, ScrapedPost['images'][number] | null>();
   const sourceURLs = [...new Set(postsWithContent.flatMap((post) => post.imageUrls))];
@@ -58,6 +59,19 @@ async function persistPosts(ctx: ActionCtx, session: OpenedBrowserSession, posts
       try {
         const blob = await downloadImage(session, sourceURL);
         const storageId = await ctx.storage.store(blob);
+        if (digestId !== undefined) {
+          let registered: boolean;
+          try {
+            registered = await ctx.runMutation(internal.digests.registerAsset, { digestId, storageId });
+          } catch (error) {
+            await ctx.storage.delete(storageId);
+            throw error;
+          }
+          if (!registered) {
+            imageCache.set(sourceURL, null);
+            continue;
+          }
+        }
         const url = await ctx.storage.getUrl(storageId);
         imageCache.set(sourceURL, url === null ? null : { storageId, url });
       } catch {
@@ -139,11 +153,12 @@ export async function runServiceScraperWithProfile(
   firecrawlProfileName: string,
   maxPosts: number,
   scrape: ServiceScraper,
+  digestId?: Id<'digests'>,
 ): Promise<ScrapedPost[]> {
   validateMaxPosts(maxPosts);
 
   return await withBrowserSession(firecrawlProfileName, async (session) =>
-    scrapeServiceWithSession(ctx, session, maxPosts, scrape),
+    scrapeServiceWithSession(ctx, session, maxPosts, scrape, digestId),
   );
 }
 
@@ -152,10 +167,11 @@ export async function scrapeServiceWithSession(
   session: OpenedBrowserSession,
   maxPosts: number,
   scrape: ServiceScraper,
+  digestId?: Id<'digests'>,
 ): Promise<ScrapedPost[]> {
   validateMaxPosts(maxPosts);
   const rawPosts = await scrape(session, maxPosts + CAPTURE_OVERSCAN);
-  const posts = await persistPosts(ctx, session, rawPosts);
+  const posts = await persistPosts(ctx, session, rawPosts, digestId);
   console.log('[digest] mutual post persistence', {
     host: new URL(session.page.url()).hostname,
     rawMutuals: rawPosts.filter((post) => post.isMutual === true).length,
