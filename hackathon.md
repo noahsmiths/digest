@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-18T05:49:24Z
+- **Last updated:** 2026-09-18T06:05:39Z
 
 ## Log
 
@@ -171,3 +171,12 @@ workflow at a time to limit overlapping Firecrawl browser work. Added indexed
 queue state, advance-on-completion/cancellation/deletion behavior, and a visible
 queued status; reduced workflow step parallelism to one (`convex/digests.ts`,
 `convex/schema.ts`, `convex/digest/workflow.ts`, `src/ui/DigestPage.tsx`).
+
+### 2026-09-18 - 0d17c35
+
+Added separate controls for scheduled daily delivery and emails after manually
+created digests. Saved the new preference and tagged digest sources so scheduled
+digests still email when manual-digest emails are disabled; settings show saving
+and failure feedback (`convex/preferences.ts`, `convex/schema.ts`,
+`convex/digests.ts`, `src/ui/SettingsPage.tsx`). Digest history now shows post
+counts only for completed or partial digests (`src/ui/DigestPage.tsx`).
