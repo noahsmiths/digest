@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { AuthButton } from '../auth/AuthForm';
 import { Brand } from './Chrome';
+import { Modal } from './Modal';
 import { categories, type Category } from './shared';
 
 export function LandingPage() {
@@ -35,6 +36,7 @@ export function LandingPage() {
 
 function ExampleLetter() {
   const [section, setSection] = useState<Category>('social');
+  const [imageOpen, setImageOpen] = useState(false);
   const letterRef = useRef<HTMLDivElement>(null);
   const postsByCategory = {
     social: [
@@ -90,9 +92,15 @@ function ExampleLetter() {
                   </div>
                   {post.image && (
                     <div className="post-image-carousel">
-                      <div className="post-image-open">
+                      <button
+                        className="post-image-open"
+                        type="button"
+                        aria-label={`View image from ${post.author}'s post`}
+                        aria-haspopup="dialog"
+                        onClick={() => setImageOpen(true)}
+                      >
                         <img src={post.image} alt="Illustrative community garden" />
-                      </div>
+                      </button>
                     </div>
                   )}
                 </article>
@@ -101,6 +109,12 @@ function ExampleLetter() {
           ))}
         </div>
       </div>
+      {imageOpen && (
+        <Modal className="image-modal" label="Image from Maya Chen's post" onClose={() => setImageOpen(false)}>
+          <div className="image-modal-heading"><h2>Maya Chen</h2><p>Instagram</p></div>
+          <img className="image-modal-image" src="/sample-garden.jpg" alt="Illustrative community garden" />
+        </Modal>
+      )}
     </div>
   );
 }
