@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-18T05:30:00Z
+- **Last updated:** 2026-09-18T05:49:24Z
 
 ## Log
 
@@ -163,3 +163,11 @@ Published the production backend and frontend through Convex static hosting whil
 preserving auth and webhook paths (`convex/convex.config.ts`, `convex/http.ts`, `package.json`, `README.md`).
 GitHub redirects now use `DIGEST_APP_URL` (`convex/auth.ts`). Build, TypeScript, lint,
 hosted routes, auth key serving, and unsigned-webhook rejection passed; full GitHub login remains unverified.
+
+### 2026-09-18 - 847284f
+
+Queued manual and scheduled digests in creation order, with one active digest
+workflow at a time to limit overlapping Firecrawl browser work. Added indexed
+queue state, advance-on-completion/cancellation/deletion behavior, and a visible
+queued status; reduced workflow step parallelism to one (`convex/digests.ts`,
+`convex/schema.ts`, `convex/digest/workflow.ts`, `src/ui/DigestPage.tsx`).
