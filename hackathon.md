@@ -3,16 +3,16 @@
 - **Project:** digest
 - **Event:** Convex All Gas Hackathon
 - **What it does:** An authenticated Convex + React app that turns Instagram, X, and LinkedIn feeds into durable, categorized digests with customizable category rules and scheduled email delivery, while preserving the original post content and images.
-- **Live app:** not deployed
+- **Live app:** https://focused-wolf-619.convex.site
 - **Repo:** https://github.com/noahsmiths/digest
-- **Frontend:** not deployed
-- **Convex deployment:** not deployed
-- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features; AgentMail sends digest emails, receives and fetches replies for category/rule updates, and sends confirmations through its Node SDK because its Convex component was broken during our build
+- **Frontend:** Convex static hosting
+- **Convex deployment:** https://focused-wolf-619.convex.cloud
+- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow, @convex-dev/static-hosting; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features; AgentMail sends digest emails, receives and fetches replies for category/rule updates, and sends confirmations through its Node SDK because its Convex component was broken during our build
 - **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, paginated queries, file storage, durable workflows, crons, HTTP actions, scheduled functions
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-18T04:52:06Z
+- **Last updated:** 2026-09-18T05:30:00Z
 
 ## Log
 
@@ -154,3 +154,12 @@ email-reply agent threads (`convex/digests.ts`, `src/ui/DigestPage.tsx`).
 Improved service connection controls with explicit completion and cancellation;
 cancelling closes the Firecrawl browser and removes the pending session
 (`convex/login/node.ts`, `src/App.tsx`, `src/ui/SettingsPage.tsx`).
+
+### 2026-09-18 - 7ebd098
+
+Restyled digest emails to include full posts, images, category counts, and warnings
+in HTML and plain text (`shared/digestEmail.ts`, `convex/digests.ts`, `convex/digest/email.ts`).
+Published the production backend and frontend through Convex static hosting while
+preserving auth and webhook paths (`convex/convex.config.ts`, `convex/http.ts`, `package.json`, `README.md`).
+GitHub redirects now use `DIGEST_APP_URL` (`convex/auth.ts`). Build, TypeScript, lint,
+hosted routes, auth key serving, and unsigned-webhook rejection passed; full GitHub login remains unverified.
