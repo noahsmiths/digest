@@ -103,7 +103,7 @@ export const finishWithoutUpdate = internalMutation({
     const reply = await ctx.db.get('emailPreferenceReplies', replyId);
     if (reply?.status === 'pending') await ctx.db.patch('emailPreferenceReplies', replyId, {
       status, ...(failureCode === undefined ? {} : { failureCode }),
-      ...(status === 'failed' ? { confirmationText: "I couldn't update your digest preferences. Please reply again with a short, specific category change, or edit your rules in Settings. Your existing preferences are unchanged." } : {}),
+      ...(status === 'failed' ? { confirmationText: "I couldn't update your Digest preferences. Please reply again with a short, specific category change, or edit your rules in Settings. Your existing preferences are unchanged." } : {}),
     });
     return null;
   },

@@ -29,7 +29,7 @@ export function classificationPromptError(prompt: string): string | null {
   const parsed = parseClassificationPrompt(prompt);
   if (prompt.length > 20_000) return 'Keep your classification prompt under 20,000 characters.';
   if ([...prompt.matchAll(/^## (.*)$/gm)].some((heading) => heading[1].trim().toLowerCase() === 'drop')) return 'Drop is reserved and cannot be configured as a category.';
-  if (parsed.categories.length < 1) return 'Add at least one digest category.';
+  if (parsed.categories.length < 1) return 'Add at least one Digest category.';
   if (parsed.categories.length > 30) return 'Use no more than 30 categories.';
   if (parsed.categories.some(({ name, prompt }) => !name || name.length > 80 || !prompt)) return 'Give every category a name of up to 80 characters and a prompt.';
   if (new Set(parsed.categories.map(({ id }) => id)).size !== parsed.categories.length) return 'Each category needs a unique name.';

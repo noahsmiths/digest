@@ -13,25 +13,25 @@ colors:
   seal-dark: "#843a29"
 typography:
   display:
-    fontFamily: "Alegreya, Georgia, serif"
+    fontFamily: "Alegreya Sans, Trebuchet MS, sans-serif"
     fontSize: "clamp(48px, 5vw, 76px)"
     fontWeight: 500
     lineHeight: 0.98
     letterSpacing: "-0.035em"
   headline:
-    fontFamily: "Alegreya, Georgia, serif"
+    fontFamily: "Alegreya Sans, Trebuchet MS, sans-serif"
     fontSize: "clamp(36px, 3.5vw, 48px)"
     fontWeight: 500
     lineHeight: 1
     letterSpacing: "-0.03em"
   title:
-    fontFamily: "Alegreya, Georgia, serif"
+    fontFamily: "Alegreya Sans, Trebuchet MS, sans-serif"
     fontSize: "clamp(33px, 3.2vw, 48px)"
     fontWeight: 500
     lineHeight: 1
     letterSpacing: "-0.02em"
   body-reading:
-    fontFamily: "Alegreya, Georgia, serif"
+    fontFamily: "Alegreya Sans, Trebuchet MS, sans-serif"
     fontSize: "21px"
     lineHeight: 1.34
   body-ui:
@@ -89,7 +89,7 @@ components:
 
 Digest treats social updates as a short letter one can finish. A pale sage field surrounds uncoated paper, with deep green ink, fine rules, dated reading marks, and a restrained rust seal. The letter is the reading surface across the preview, connections, digest history, and authentication.
 
-The visual voice is editorial and calm. Serif type carries the thesis, letter headings, and post text; sans-serif type carries controls and metadata. Space and rules separate passages. Source images stay compact beside the text, and the main section selector keeps the reader oriented as they move through the letter.
+The visual voice is editorial and calm. Alegreya Sans carries the entire interface, from the thesis and letter headings to controls and metadata. Space and rules separate passages. Source images stay compact beside the text, and the main section selector keeps the reader oriented as they move through the letter.
 
 **Key Characteristics:**
 - A pale field and warm paper make the finite reading surface unmistakable.
@@ -120,10 +120,9 @@ The palette reads like ink on paper set against a muted sage desk.
 
 ## Typography
 
-**Display Font:** Alegreya (Georgia fallback)
-**Body Font:** Alegreya Sans (Trebuchet MS fallback)
+**App Font:** Alegreya Sans (Trebuchet MS fallback)
 
-**Character:** The serif makes the digest feel like reading rather than feed scanning. The sans-serif keeps controls, metadata, and status concise.
+**Character:** A single sans-serif voice keeps reading, controls, metadata, and status clear and consistent.
 
 ### Hierarchy
 - **Display** (500, fluid 48–76px, 0.98 line height): The landing thesis; its italic phrase uses dark rust. Mobile uses 34–48px.
@@ -133,7 +132,7 @@ The palette reads like ink on paper set against a muted sage desk.
 - **Body UI** (17px): The page default, controls, and explanatory copy.
 - **Label** (700, 16px): Form labels and prominent small actions; quieter metadata ranges from 13–16px.
 
-**The Reading Voice Rule.** Use Alegreya for passages and editorial headings; use Alegreya Sans for actions, source labels, navigation, and state.
+**The Reading Voice Rule.** Use Alegreya Sans throughout the product.
 
 ## Layout
 

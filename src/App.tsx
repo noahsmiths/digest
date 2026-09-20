@@ -17,7 +17,7 @@ export default function App() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    document.title = pathname === '/settings' ? 'Settings · Digest' : pathname.startsWith('/digest') ? 'Your digest · Digest' : 'Digest';
+    document.title = pathname === '/settings' ? 'Settings · Digest' : pathname.startsWith('/digest') ? 'Your Digest · Digest' : 'Digest';
   }, [pathname]);
 
   if (isLoading) return <AppLoading />;
@@ -169,7 +169,7 @@ function SignedInApp({ page }: { page: Page }) {
       navigate('digest', await startDigest({}));
     } catch (cause) {
       console.error('Failed to start digest:', cause);
-      setError('Could not start a digest. Check that a service is connected and try again.');
+      setError('Could not start a Digest. Check that a service is connected and try again.');
     } finally {
       setIsStartingDigest(false);
     }

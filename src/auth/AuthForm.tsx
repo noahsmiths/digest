@@ -43,7 +43,7 @@ export function AuthForm() {
     <div className="auth-form">
       <div className="auth-heading">
         <h2>{isSignUp ? 'Make room for a quieter feed.' : 'Welcome back.'}</h2>
-        <p>{isSignUp ? 'Create an account to connect your services.' : 'Sign in to read your digest.'}</p>
+        <p>{isSignUp ? 'Create an account to connect your services.' : 'Sign in to read your Digest.'}</p>
       </div>
 
       <form onSubmit={(event) => void submit(event)}>

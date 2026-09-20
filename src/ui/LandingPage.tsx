@@ -15,16 +15,22 @@ export function LandingPage() {
       <main>
         <section className="landing-hero">
           <div className="hero-story">
-            <h1>Keep up, without getting sucked in.</h1>
+            <h1>Welcome to Digest!</h1>
             <p className="hero-description">
-              Quitting social media is hard, especially because many of us rely on it for information and staying connected with friends. That's where Digest comes in. Digest cuts out all of the ads and algorithms designed to suck up your time, and instead distills your feed down to the key parts that you actually want to see.
+              <p>
+                Social media is riddled with ads and algorithms created specifically to suck us in and take up our time. But leaving social media entirely is hard, especially because many of us rely on it for information and staying connected with friends and family.
+              </p>
+              <br></br>
+              <p>
+              That's where Digest comes in. Digest cuts out all of the bloat and distills your feeds into a daily newsletter, containing only what you really want to see. Try it out now!
+              </p>
             </p>
-            <AuthButton label="Start with Digest" className="primary-action hero-action" />
+            <AuthButton label="Start with Digest" className="primary-action hero-action w-[90%]" />
           </div>
 
           <div className="hero-example">
             <ExampleLetter />
-            <p className="example-note">Illustrative preview · Your own digest uses your connected feeds</p>
+            <p className="example-note">Illustrative preview. Your own Digest uses your connected feeds</p>
           </div>
         </section>
 
@@ -65,7 +71,7 @@ function ExampleLetter() {
   return (
     <div className="example-letter reading-sheet letter-sheet" ref={letterRef}>
       <div className="digest-letter-body">
-        <nav className="digest-index" aria-label="Example digest sections">
+        <nav className="digest-index" aria-label="Example Digest sections">
           <span className="index-title">Sections</span>
           {categories.map((category) => (
             <button

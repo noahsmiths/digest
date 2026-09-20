@@ -48,7 +48,7 @@ export function DigestPage({
 
       {linkedServices.length === 0 && (
         <div className="inline-alert empty-alert">
-          <p>Connect a service before making a digest.</p>
+          <p>Connect a service before making a Digest.</p>
           <Link className="text-action" to="/settings">Open settings <ArrowIcon /></Link>
         </div>
       )}
@@ -61,11 +61,11 @@ export function DigestPage({
             disabled={linkedServices.length === 0 || isStartingDigest || activeDigest !== undefined}
             onClick={() => void onGenerate()}
           >
-            <span>{isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new digest'}</span>
+            <span>{isStartingDigest ? 'Starting…' : activeDigest !== undefined ? 'Digest in progress…' : 'Make a new Digest'}</span>
             {activeDigest === undefined && <ArrowIcon />}
           </button>
           <div className="history-heading">
-            <h2 id="history-title">Past digests</h2>
+            <h2 id="history-title">Past Digests</h2>
             <button className="history-toggle" type="button" aria-expanded={historyOpen} aria-controls="history-content" onClick={() => setHistoryOpen((open) => !open)}>
               {historyOpen ? 'Hide history' : 'Show history'}
             </button>
@@ -74,7 +74,7 @@ export function DigestPage({
           {paginationStatus === 'LoadingFirstPage' ? (
             <p className="history-empty">Loading your history…</p>
           ) : digests.length === 0 ? (
-            <p className="history-empty">Your first digest will live here when it is ready.</p>
+            <p className="history-empty">Your first Digest will live here when it is ready.</p>
           ) : (
             <ul className="history-list">
               {digests.map((digest) => (
@@ -104,16 +104,16 @@ export function DigestPage({
           </div>
         </aside>
 
-        <section className="reading-sheet letter-sheet" aria-label="Selected digest" tabIndex={0}>
+        <section className="reading-sheet letter-sheet" aria-label="Selected Digest" tabIndex={0}>
           {currentDigestId === null ? (
             <div className="digest-empty digest-empty-placeholder">
-              <h2>No digests yet. Create one now!</h2>
-              {linkedServices.length > 0 && <button className="text-action" type="button" onClick={() => void onGenerate()}>Make your first digest <ArrowIcon /></button>}
+              <h2>No Digests yet. Create one now!</h2>
+              {linkedServices.length > 0 && <button className="text-action" type="button" onClick={() => void onGenerate()}>Make your first Digest <ArrowIcon /></button>}
             </div>
           ) : selectedDigest === undefined ? (
-            <div className="digest-empty" aria-live="polite">Opening this digest…</div>
+            <div className="digest-empty" aria-live="polite">Opening this Digest…</div>
           ) : selectedDigest === null ? (
-            <div className="digest-empty">This digest is unavailable. Choose another from your history.</div>
+            <div className="digest-empty">This Digest is unavailable. Choose another from your history.</div>
           ) : (
             <DigestDetail key={selectedDigest.digest._id} digest={selectedDigest.digest} posts={selectedDigest.posts} />
           )}
@@ -146,7 +146,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
       await navigate('/digest', { replace: true });
     } catch (cause) {
       console.error('Failed to delete digest:', cause);
-      setDeleteError('Could not delete this digest. Please try again.');
+      setDeleteError('Could not delete this Digest. Please try again.');
       setIsDeleting(false);
     }
   };
@@ -225,12 +225,12 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
       {digest.status === 'running' && (
         <div className="digest-progress" role="status">
           <span className="progress-line" aria-hidden="true"><span /></span>
-          <p>{digest.stage === 'queued' ? 'Your digest is queued and will start when the current digest finishes...' : digest.stage === 'scraping' ? 'Gathering posts...' : 'Choosing the useful posts...'}</p>
+          <p>{digest.stage === 'queued' ? 'Your Digest is queued and will start when the current Digest finishes...' : digest.stage === 'scraping' ? 'Gathering posts...' : 'Choosing the useful posts...'}</p>
         </div>
       )}
       {failedServices.length > 0 && <p className="inline-alert warning-alert">Could not read {failedServices.map(({ service }) => serviceName(service)).join(', ')}. Available services are still included.</p>}
       {digest.classificationFallbackCount > 0 && <p className="inline-alert warning-alert">{digest.classificationFallbackCount} posts were omitted because they could not be categorized.</p>}
-      {digest.status === 'failed' && <p className="inline-alert error-alert">This digest could not finish. Check your connections, then make another.</p>}
+      {digest.status === 'failed' && <p className="inline-alert error-alert">This Digest could not finish. Check your connections, then make another.</p>}
 
       <div className="digest-letter-body">
         <nav className="digest-index" aria-label={isReadable ? 'Digest sections' : 'Digest actions'}>
@@ -252,7 +252,7 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
             aria-haspopup="dialog"
             onClick={() => { setDeleteError(null); setDeleteOpen(true); }}
           >
-            Delete digest
+            Delete Digest
           </button>
         </nav>
 
@@ -274,9 +274,9 @@ function DigestDetail({ digest, posts }: { digest: DigestData['digest']; posts: 
         </div>}
       </div>
       {deleteOpen && (
-        <Modal className="delete-digest-modal" label="Delete digest" onClose={() => { if (!isDeleting) setDeleteOpen(false); }}>
-          <h2>Delete this digest?</h2>
-          <p>The digest from {formatDate(digest._creationTime)} and all its posts, images, and related data will be permanently deleted. This cannot be undone.</p>
+        <Modal className="delete-digest-modal" label="Delete Digest" onClose={() => { if (!isDeleting) setDeleteOpen(false); }}>
+          <h2>Delete this Digest?</h2>
+          <p>The Digest from {formatDate(digest._creationTime)} and all its posts, images, and related data will be permanently deleted. This cannot be undone.</p>
           {deleteError !== null && <p role="alert" className="inline-alert error-alert">{deleteError}</p>}
           <div className="delete-digest-actions" aria-busy={isDeleting}>
             <button className="small-action" type="button" disabled={isDeleting} onClick={() => setDeleteOpen(false)}>Cancel</button>

@@ -18,7 +18,7 @@ export function Brand() {
   return (
     <Link to="/" className="brand" aria-label="Digest home">
       <span className="brand-mark" aria-hidden="true">d.</span>
-      <span className="brand-name">digest</span>
+      <span className="brand-name">Digest</span>
     </Link>
   );
 }

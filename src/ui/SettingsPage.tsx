@@ -192,7 +192,7 @@ function ClassificationSettings({ prompt, onSave }: { prompt: string; onSave: (p
     try {
       await onSave(serialized);
       setSavedPrompt(serialized);
-      setStatus('Saved. Your next digest will use these rules.');
+      setStatus('Saved. Your next Digest will use these rules.');
     } catch {
       setError('Could not save your classification rules. Your edits are still here — try saving again.');
     } finally {
@@ -203,8 +203,8 @@ function ClassificationSettings({ prompt, onSave }: { prompt: string; onSave: (p
   return (
     <section className="classification-settings" aria-labelledby="classification-settings-title">
       <div className="delivery-settings-heading">
-        <h2 id="classification-settings-title">Your digest rules</h2>
-        <p>Shape your digest with your own categories and rules. Changes apply to all new digests. You can also change these by naturally replying to a daily digest email, for example saying something like "Create a new category for Shoe Releases"</p>
+        <h2 id="classification-settings-title">Your Digest rules</h2>
+        <p>Shape your Digest with your own categories and rules. Changes apply to all new Digests. You can also change these by naturally replying to a daily Digest email, for example saying something like "Create a new category for Shoe Releases"</p>
       </div>
       <fieldset disabled={isSaving} className="classification-fields">
         <ul className="category-rules">
@@ -270,12 +270,12 @@ function EmailSettings({
     <section className="email-settings" aria-labelledby="email-settings-title">
       <div className="delivery-settings-heading">
         <h2 id="email-settings-title">Emails</h2>
-        <p>Choose when digests arrive in your inbox.</p>
+        <p>Choose when Digests arrive in your inbox.</p>
       </div>
       <section className="delivery-settings" aria-labelledby="delivery-settings-title">
         <div className="delivery-settings-heading">
           <h3 id="delivery-settings-title">Daily delivery</h3>
-          <p>A new digest is automatically created at your selected time and emailed to you.</p>
+          <p>A new Digest is automatically created at your selected time and emailed to you.</p>
         </div>
         <label className="delivery-switch">
           <input
@@ -286,7 +286,7 @@ function EmailSettings({
           />
           <span className="delivery-switch-control" aria-hidden="true"><span /></span>
           <span>
-            <strong>Automatically make my digest every day</strong>
+            <strong>Automatically make my Digest every day</strong>
           </span>
         </label>
         <label className="delivery-time-field">
@@ -302,8 +302,8 @@ function EmailSettings({
       </section>
       <section className="delivery-settings" aria-labelledby="digest-email-settings-title">
         <div className="delivery-settings-heading">
-          <h3 id="digest-email-settings-title">After digest creation</h3>
-          <p>Receive an email when a digest you make finishes, too.</p>
+          <h3 id="digest-email-settings-title">After Digest creation</h3>
+          <p>Receive an email when a Digest you make finishes, too.</p>
         </div>
         <label className="delivery-switch">
           <input
@@ -314,8 +314,8 @@ function EmailSettings({
           />
           <span className="delivery-switch-control" aria-hidden="true"><span /></span>
           <span>
-            <strong>Email me after every digest</strong>
-            <small>When off, only scheduled daily digests are emailed. If daily delivery is also off, no digest emails are sent.</small>
+            <strong>Email me after every Digest</strong>
+            <small>When off, only scheduled daily Digests are emailed. If daily delivery is also off, no Digest emails are sent.</small>
           </span>
         </label>
       </section>

@@ -688,7 +688,7 @@ export const getDigestEmailPayload = internalQuery({
       kind: 'send',
       inboxId: env.AGENTMAIL_INBOX_ID,
       to: digest.recipientEmail,
-      subject: `Your Digest — ${digestDate}`,
+      subject: `Your Digest for ${digestDate}`,
       ...rendered,
       idempotencyKey: digestId,
     };
