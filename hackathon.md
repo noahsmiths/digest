@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-18T06:05:39Z
+- **Last updated:** 2026-09-20T05:36:57Z
 
 ## Log
 
@@ -180,3 +180,9 @@ digests still email when manual-digest emails are disabled; settings show saving
 and failure feedback (`convex/preferences.ts`, `convex/schema.ts`,
 `convex/digests.ts`, `src/ui/SettingsPage.tsx`). Digest history now shows post
 counts only for completed or partial digests (`src/ui/DigestPage.tsx`).
+
+### 2026-09-20 - d087982
+
+Refreshed the landing page introduction and widened its hero layout. Switched
+the font and made Digest naming consistent across interface and email copy
+(`src/ui/LandingPage.tsx`, `src/index.css`, `shared/digestEmail.ts`).
