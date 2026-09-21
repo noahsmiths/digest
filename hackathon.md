@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-20T05:36:57Z
+- **Last updated:** 2026-09-21T01:11:04Z
 
 ## Log
 
@@ -186,3 +186,10 @@ counts only for completed or partial digests (`src/ui/DigestPage.tsx`).
 Refreshed the landing page introduction and widened its hero layout. Switched
 the font and made Digest naming consistent across interface and email copy
 (`src/ui/LandingPage.tsx`, `src/index.css`, `shared/digestEmail.ts`).
+
+### 2026-09-21 - 5c85e33
+
+Updated Instagram feed capture to combine network responses with rendered posts
+and scroll the page for more results. Mutual detection now checks the follower
+list in the browser and only marks unmatched accounts as non-mutual when that
+list is complete (`convex/scraping/instagram.ts`, `convex/scraping/network.ts`).
