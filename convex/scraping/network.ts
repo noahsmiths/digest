@@ -23,6 +23,7 @@ export async function collectFeedResponses({
   onPost,
   advance,
   scroll,
+  parsePage,
 }: {
   page: Page;
   maxPosts: number;
@@ -32,6 +33,7 @@ export async function collectFeedResponses({
   onPost?: (post: RawPost) => void;
   advance?: (response: Response) => Promise<{ fetched: boolean; posts: RawPost[] }>;
   scroll?: () => Promise<void>;
+  parsePage?: (page: Page) => Promise<RawPost[]>;
 }): Promise<RawPost[]> {
   const posts = new Map<string, RawPost>();
   const pending = new Set<Promise<void>>();
@@ -39,6 +41,15 @@ export async function collectFeedResponses({
   let matchingResponses = 0;
   let firstResponseError: unknown = null;
   let latestResponse: Response | null = null;
+
+  const addPosts = (candidates: RawPost[]) => {
+    for (const post of candidates) {
+      if (hasPostContent(post) && !posts.has(post.id)) {
+        posts.set(post.id, post);
+        onPost?.(post);
+      }
+    }
+  };
 
   const handleRequest = (request: Request) => {
     const url = new URL(request.url());
@@ -74,12 +85,7 @@ export async function collectFeedResponses({
         } catch {
           data = text;
         }
-        for (const post of parse(data, response)) {
-          if (hasPostContent(post) && !posts.has(post.id)) {
-            posts.set(post.id, post);
-            onPost?.(post);
-          }
-        }
+        addPosts(parse(data, response));
       })
       .catch((error: unknown) => {
         firstResponseError ??= error;
@@ -99,15 +105,23 @@ export async function collectFeedResponses({
   try {
     const initialResponse = page.waitForResponse(matches, { timeout: INITIAL_RESPONSE_TIMEOUT }).catch(() => null);
     await navigate();
-    await initialResponse;
+    if (parsePage !== undefined) {
+      addPosts(await parsePage(page));
+    }
+    if (posts.size === 0) {
+      await initialResponse;
+    }
     await Promise.all(pending);
+    if (parsePage !== undefined) {
+      addPosts(await parsePage(page));
+    }
     console.log('[digest] feed capture initialized', {
       host: new URL(page.url()).hostname,
       matchingResponses,
       observedPosts: posts.size,
       expectedPosts: maxPosts,
     });
-    if (matchingResponses === 0) {
+    if (matchingResponses === 0 && posts.size === 0) {
       const path = new URL(page.url()).pathname;
       console.warn('[digest] no initial feed response', { path, observedRequests });
       if (/login|checkpoint|challenge|authwall/i.test(path)) {
@@ -145,12 +159,7 @@ export async function collectFeedResponses({
           console.warn('[digest] direct feed fetch timed out', { host: new URL(page.url()).hostname });
         }
       }
-      for (const post of directPosts) {
-        if (hasPostContent(post) && !posts.has(post.id)) {
-          posts.set(post.id, post);
-          onPost?.(post);
-        }
-      }
+      addPosts(directPosts);
       if (!fetched) {
         let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
@@ -167,6 +176,9 @@ export async function collectFeedResponses({
       }
       if (!fetched) {
         await Promise.all(pending);
+      }
+      if (parsePage !== undefined) {
+        addPosts(await parsePage(page));
       }
       stalledRequests = posts.size === previousPostCount ? stalledRequests + 1 : 0;
       if (requests === 0 || (requests + 1) % 5 === 0) {
@@ -195,7 +207,7 @@ export async function collectFeedResponses({
     await Promise.all(pending);
   }
 
-  if (matchingResponses === 0) {
+  if (matchingResponses === 0 && posts.size === 0) {
     const currentURL = page.url();
     console.warn('[digest] no matching feed responses', {
       matchingResponses,
