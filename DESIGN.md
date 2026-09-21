@@ -3,7 +3,7 @@ name: Digest
 description: A quiet, finite letter made from connected social feeds.
 colors:
   field: "#ffffff"
-  paper: "#faf8f1"
+  paper: "#ffffff"
   paper-soft: "#f0f0e8"
   ink: "#000000"
   ink-soft: "#454545"
@@ -87,19 +87,19 @@ components:
 
 **Creative North Star: "The Daily Letter"**
 
-Digest treats social updates as a short letter one can finish. A white field surrounds a slight cream paper sheet, with black ink, fine rules, dated reading marks, and a restrained orange danger mark. The letter is the reading surface across the preview, connections, digest history, and authentication.
+Digest treats social updates as a short letter one can finish. A white field holds a white paper sheet, with black ink, fine rules, dated reading marks, and a restrained orange danger mark. The letter is the reading surface across the preview, connections, digest history, and authentication.
 
 The visual voice is editorial and calm. Alegreya Sans carries the entire interface, from the thesis and letter headings to controls and metadata. Space and rules separate passages. Source images stay compact beside the text, and the main section selector keeps the reader oriented as they move through the letter.
 
 **Key Characteristics:**
-- A white field and cream paper make the reading sheet subtly distinct without losing brightness.
+- A white field and white paper make the reading surface as light and direct as possible.
 - Black ink does most of the work; orange is reserved for danger and caution.
 - Reading text leads, with compact source images alongside it.
 - The sheet arrives gently once; sections and image carousels move by user action.
 
 ## Colors
 
-The palette reads like black ink on a slight cream sheet against a clean white desk.
+The palette reads like black ink on a white sheet against a clean white desk.
 
 ### Primary
 - **Black Ink**: Main text, outlines, strong rules, and the footer.
@@ -111,7 +111,7 @@ The palette reads like black ink on a slight cream sheet against a clean white d
 
 ### Neutral
 - **White Field**: The page canvas around each sheet.
-- **Cream Paper**: The letter sheets, reading surface, and auth dialog.
+- **White Paper**: The letter sheets, reading surface, and auth dialog.
 - **Soft Paper**: Hover and active selector fills and image fallback.
 - **Field Rule**: Outer dividers, history rows, and form strokes.
 - **Paper Rule**: Fine dividers within the letter and quiet alert borders.
@@ -144,7 +144,7 @@ At 1100px, the preview index becomes horizontal and the reading rails narrow. At
 
 ## Elevation & Depth
 
-The sheets use one diffuse neutral shadow to separate cream paper from the white field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, black ink rules, and selection underlines rather than raised cards.
+The sheets use one diffuse neutral shadow to separate white paper from the white field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, black ink rules, and selection underlines rather than raised cards.
 
 **The Paper Rule.** Use elevation for the whole sheet or modal, then keep entries and controls flat within it.
 
@@ -161,7 +161,7 @@ The system is mostly square: paper sheets, fields, row actions, status labels, a
 - **Focus / Disabled:** Keyboard focus gets a 3px orange outline with 3px offset. Disabled buttons lower opacity to 0.48.
 
 ### Cards / Containers
-- **Letter sheet:** Cream paper with one diffuse neutral shadow. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
+- **Letter sheet:** White paper with one diffuse neutral shadow. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
 - **Status and alert:** Compact outlined labels. Orange border and dark orange text signal partial, failed, running, warning, or error states; complete uses black ink.
 
 ### Inputs / Fields
@@ -178,7 +178,7 @@ Post author and source sit above the original text. Long posts can expand in pla
 ## Do's and Don'ts
 
 ### Do:
-- **Do** place the cream letter on the white field for primary reading surfaces.
+- **Do** place the white letter on the white field for primary reading surfaces.
 - **Do** use orange only to identify danger, warnings, and errors.
 - **Do** preserve the text-first passage and compact per-post image relationship.
 - **Do** keep section selection visible and tied to the passage in view.
