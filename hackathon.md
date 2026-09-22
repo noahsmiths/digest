@@ -12,7 +12,7 @@
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-22T00:14:33Z
+- **Last updated:** 2026-09-22T07:08:23Z
 
 ## Log
 
@@ -201,3 +201,11 @@ outlined controls, orange danger states, an elevated digest sheet, and orange
 enabled email-delivery toggles. Centered and clarified the landing-page welcome
 copy and primary action, and simplified the sign-up heading (`src/index.css`,
 `src/ui/LandingPage.tsx`, `src/auth/AuthForm.tsx`, `DESIGN.md`).
+
+### 2026-09-22 - 3c12f14
+
+Reworked the README into a public project overview with the product motivation,
+live demo, and a Mermaid diagram tracing scheduled or manual digest creation
+through Firecrawl scraping, Convex storage and workflows, OpenAI classification,
+reactive rendering, AgentMail delivery, and reply-driven preference updates
+(`README.md`).
