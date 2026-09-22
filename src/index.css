@@ -135,8 +135,8 @@ svg { display: block; }
 .delivery-switch-control { display: flex; align-items: center; width: 42px; height: 24px; margin-top: 2px; padding: 2px; border: 1px solid var(--ink-soft); background: var(--paper); transition: background .16s ease-out, border-color .16s ease-out; }
 .email-settings .delivery-switch-control { flex-shrink: 0; }
 .delivery-switch-control span { width: 18px; height: 18px; background: var(--ink-soft); transition: transform .16s ease-out, background .16s ease-out; }
-.delivery-switch input:checked + .delivery-switch-control { border-color: var(--ink); background: transparent; }
-.delivery-switch input:checked + .delivery-switch-control span { transform: translateX(18px); background: var(--ink); }
+.delivery-switch input:checked + .delivery-switch-control { border-color: var(--seal); background: transparent; }
+.delivery-switch input:checked + .delivery-switch-control span { transform: translateX(18px); background: var(--seal); }
 .delivery-switch input:focus-visible + .delivery-switch-control { outline: 3px solid var(--seal); outline-offset: 3px; }
 .delivery-switch input:disabled + .delivery-switch-control { opacity: .48; }
 .delivery-switch strong, .delivery-time-field > span { display: block; font-size: 17px; font-weight: 700; }
