@@ -144,7 +144,7 @@ At 1100px, the preview index becomes horizontal and the reading rails narrow. At
 
 ## Elevation & Depth
 
-The sheets use one diffuse neutral shadow to separate white paper from the white field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, black ink rules, and selection underlines rather than raised cards.
+The sheets use one diffuse neutral shadow visible on every side to separate white paper from the white field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, black ink rules, and selection underlines rather than raised cards.
 
 **The Paper Rule.** Use elevation for the whole sheet or modal, then keep entries and controls flat within it.
 
@@ -161,7 +161,7 @@ The system is mostly square: paper sheets, fields, row actions, status labels, a
 - **Focus / Disabled:** Keyboard focus gets a 3px orange outline with 3px offset. Disabled buttons lower opacity to 0.48.
 
 ### Cards / Containers
-- **Letter sheet:** White paper with one diffuse neutral shadow. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
+- **Letter sheet:** White paper with one diffuse neutral shadow on every edge. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
 - **Status and alert:** Compact outlined labels. Orange border and dark orange text signal partial, failed, running, warning, or error states; complete uses black ink.
 
 ### Inputs / Fields

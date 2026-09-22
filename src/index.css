@@ -48,7 +48,7 @@ svg { display: block; }
 .danger-action:hover:not(:disabled) { border-color: var(--seal); background: transparent; color: var(--seal); }
 .text-action { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: 0; border-bottom: 1px solid currentColor; color: var(--ink); padding: 4px 0; font-weight: 600; text-decoration: none; }
 .text-action:hover { color: var(--seal); }
-.letter-sheet { background: var(--paper); box-shadow: 0 26px 65px -38px var(--sheet-shadow); }
+.letter-sheet { background: var(--paper); box-shadow: 0 4px 24px -4px var(--sheet-shadow); }
 
 .landing-page { height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .landing-page > main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; overscroll-behavior: contain; }
