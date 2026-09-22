@@ -2,13 +2,13 @@
 name: Digest
 description: A quiet, finite letter made from connected social feeds.
 colors:
-  field: "#e1e9e4"
-  paper: "#faf8f1"
+  field: "#ffffff"
+  paper: "#ffffff"
   paper-soft: "#f0f0e8"
-  ink: "#18332e"
-  ink-soft: "#456159"
-  rule: "#b5c7bd"
-  paper-rule: "#d7ded4"
+  ink: "#000000"
+  ink-soft: "#454545"
+  rule: "#c8c8c2"
+  paper-rule: "#deddd4"
   seal: "#a34935"
   seal-dark: "#843a29"
 typography:
@@ -87,36 +87,36 @@ components:
 
 **Creative North Star: "The Daily Letter"**
 
-Digest treats social updates as a short letter one can finish. A pale sage field surrounds uncoated paper, with deep green ink, fine rules, dated reading marks, and a restrained rust seal. The letter is the reading surface across the preview, connections, digest history, and authentication.
+Digest treats social updates as a short letter one can finish. A white field holds a white paper sheet, with black ink, fine rules, dated reading marks, and a restrained orange danger mark. The letter is the reading surface across the preview, connections, digest history, and authentication.
 
 The visual voice is editorial and calm. Alegreya Sans carries the entire interface, from the thesis and letter headings to controls and metadata. Space and rules separate passages. Source images stay compact beside the text, and the main section selector keeps the reader oriented as they move through the letter.
 
 **Key Characteristics:**
-- A pale field and warm paper make the finite reading surface unmistakable.
-- Green ink does most of the work; rust marks emphasis, selection, and caution.
+- A white field and white paper make the reading surface as light and direct as possible.
+- Black ink does most of the work; orange is reserved for danger and caution.
 - Reading text leads, with compact source images alongside it.
 - The sheet arrives gently once; sections and image carousels move by user action.
 
 ## Colors
 
-The palette reads like ink on paper set against a muted sage desk.
+The palette reads like black ink on a white sheet against a clean white desk.
 
 ### Primary
-- **Deep Green Ink**: Main text, primary actions, strong rules, and the footer.
-- **Soft Green Ink**: Supporting copy, metadata, quiet navigation, and idle selectors.
+- **Black Ink**: Main text, outlines, strong rules, and the footer.
+- **Soft Black Ink**: Supporting copy, metadata, quiet navigation, and idle selectors.
 
 ### Secondary
-- **Rust Seal**: Selection marks, focus outlines, progress, and the circular letter mark.
-- **Dark Rust**: The italic hero phrase and warning or error text.
+- **Orange Seal**: Danger, warning, and error states.
+- **Dark Orange**: Danger and error text.
 
 ### Neutral
-- **Sage Field**: The page canvas around each sheet.
-- **Uncoated Paper**: The letter sheets, reading surface, and auth dialog.
+- **White Field**: The page canvas around each sheet.
+- **White Paper**: The letter sheets, reading surface, and auth dialog.
 - **Soft Paper**: Hover and active selector fills and image fallback.
 - **Field Rule**: Outer dividers, history rows, and form strokes.
 - **Paper Rule**: Fine dividers within the letter and quiet alert borders.
 
-**The Seal Rule.** Rust marks a meaningful state or a single editorial accent; green ink remains the default voice.
+**The Orange Rule.** Orange is reserved for danger, warning, and error; black remains the default voice.
 
 ## Typography
 
@@ -125,7 +125,7 @@ The palette reads like ink on paper set against a muted sage desk.
 **Character:** A single sans-serif voice keeps reading, controls, metadata, and status clear and consistent.
 
 ### Hierarchy
-- **Display** (500, fluid 48–76px, 0.98 line height): The landing thesis; its italic phrase uses dark rust. Mobile uses 34–48px.
+- **Display** (500, fluid 48–76px, 0.98 line height): The landing thesis; its italic phrase uses dark orange. Mobile uses 34–48px.
 - **Headline** (500, fluid 36–48px, 1 line height): Page introductions. The mobile digest heading uses 32px.
 - **Title** (500, fluid 33–48px, 1 line height): The letter heading; digest and mobile variants adjust its size.
 - **Body reading** (21px, 1.34 line height): Original post text, with a maximum measure of 72ch. Mobile post text is 19px.
@@ -144,33 +144,33 @@ At 1100px, the preview index becomes horizontal and the reading rails narrow. At
 
 ## Elevation & Depth
 
-The sheets use one diffuse green-tinted shadow to separate warm paper from sage field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, ink rules, and selection underlines rather than raised cards.
+The sheets use one diffuse neutral shadow visible on every side to separate white paper from the white field. The auth dialog uses a deeper shadow and a dark blurred backdrop. Inside the letter, depth comes from paper tones, black ink rules, and selection underlines rather than raised cards.
 
 **The Paper Rule.** Use elevation for the whole sheet or modal, then keep entries and controls flat within it.
 
 ## Shapes
 
-The system is mostly square: paper sheets, fields, row actions, status labels, and selectors rely on fine rules rather than rounded cards. The primary action has a barely softened 2px corner. Circular letter marks and connection dots are the deliberate exceptions. The rust seal appears as an outlined circle; selected navigation and sections are marked with a thin rust rule.
+The system is mostly square: paper sheets, fields, row actions, status labels, and selectors rely on fine rules rather than rounded cards. The primary action has a barely softened 2px corner. Circular letter marks and connection dots are the deliberate exceptions. Danger marks use orange outlines; selected navigation and sections use fine black rules.
 
 ## Components
 
 ### Buttons
-- **Primary:** Green ink fill, paper text, slight 2px corner, 50px minimum height, and 10px × 22px padding. Hover deepens the green and lifts 2px; active returns to the baseline.
-- **Small row action:** Square outlined control for connecting or disconnecting; hover fills with ink.
-- **Text action:** Flat ink label with a bottom rule; hover changes label and rule to rust.
-- **Focus / Disabled:** Keyboard focus gets a 3px rust outline with 3px offset. Disabled buttons lower opacity to 0.48.
+- **Primary:** Black outlined control with transparent fill, 50px minimum height, and 10px × 22px padding. Hover lifts 2px without filling.
+- **Small row action:** Square black outlined control for connecting or disconnecting; it stays transparent on hover.
+- **Text action:** Flat ink label with a bottom rule; hover changes label and rule to orange only for dangerous actions.
+- **Focus / Disabled:** Keyboard focus gets a 3px orange outline with 3px offset. Disabled buttons lower opacity to 0.48.
 
 ### Cards / Containers
-- **Letter sheet:** Warm paper with one diffuse green-tinted shadow. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
-- **Status and alert:** Compact outlined labels. Rust border and dark rust text signal partial, failed, running, warning, or error states; complete uses green ink.
+- **Letter sheet:** White paper with one diffuse neutral shadow on every edge. Fine paper rules divide its head, entries, and ending; generous padding changes by surface and viewport.
+- **Status and alert:** Compact outlined labels. Orange border and dark orange text signal partial, failed, running, warning, or error states; complete uses black ink.
 
 ### Inputs / Fields
-- **Auth field:** Square paper input with a field-rule stroke, 46px height, and 8px × 13px padding. Focus changes the border to ink and adds an inset rust underline. Errors use dark rust text.
+- **Auth field:** Square paper input with a field-rule stroke, 46px height, and 8px × 13px padding. Focus changes the border to ink and adds an inset orange underline. Errors use dark orange text.
 
 ### Navigation
-- **App navigation:** Flat sans-serif labels in soft ink; the active page uses deep ink and a rust bottom rule. On mobile the links move to a second header row.
-- **Section selector:** Soft ink at rest, soft paper on hover, and deep ink with a rust underline when active. The digest index stays near the passage on desktop and becomes a sticky horizontal row on mobile.
-- **History item:** Date-led text in the field rail. The selected letter gains paper fill and an inset rust underline; mobile history is revealed through a toggle and scrolls horizontally.
+- **App navigation:** Flat sans-serif labels in soft ink; the active page uses black ink and a black bottom rule. On mobile the links move to a second header row.
+- **Section selector:** Soft ink at rest, soft paper on hover, and black ink with a black underline when active. The digest index stays near the passage on desktop and becomes a sticky horizontal row on mobile.
+- **History item:** Date-led text in the field rail. The selected letter gains paper fill and an inset black underline; mobile history is revealed through a toggle and scrolls horizontally.
 
 ### Post and image
 Post author and source sit above the original text. Long posts can expand in place. Images form a small, per-post carousel at the side, with explicit previous and next controls only when there is more than one image.
@@ -178,8 +178,8 @@ Post author and source sit above the original text. Long posts can expand in pla
 ## Do's and Don'ts
 
 ### Do:
-- **Do** place the finite letter on the sage field for primary reading surfaces.
-- **Do** use rust to identify selection, focus, progress, and caution.
+- **Do** place the white letter on the white field for primary reading surfaces.
+- **Do** use orange only to identify danger, warnings, and errors.
 - **Do** preserve the text-first passage and compact per-post image relationship.
 - **Do** keep section selection visible and tied to the passage in view.
 
