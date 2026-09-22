@@ -7,12 +7,12 @@
 - **Repo:** https://github.com/noahsmiths/digest
 - **Frontend:** Convex static hosting
 - **Convex deployment:** https://focused-wolf-619.convex.cloud
-- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow, @convex-dev/static-hosting; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features; AgentMail sends digest emails, receives and fetches replies for category/rule updates, and sends confirmations through its Node SDK because its Convex component was broken during our build
+- **Components:** @convex-dev/auth (core, password, username, OAuth), @convex-dev/agent, @convex-dev/workflow, @convex-dev/static-hosting; Firecrawl is integrated through its SDK rather than its Convex component because the component lacks required Browser API features; AgentMail Node SDK because its Convex component was not working during our build
 - **Convex features:** schema, tables, indexes, queries, mutations, actions, realtime queries, paginated queries, file storage, durable workflows, crons, HTTP actions, scheduled functions
 - **Auth:** Convex Auth
 - **AI models:** gpt-5
 - **Started:** 2026-09-02T09:44:09Z
-- **Last updated:** 2026-09-21T01:11:04Z
+- **Last updated:** 2026-09-22T00:14:33Z
 
 ## Log
 
@@ -193,3 +193,11 @@ Updated Instagram feed capture to combine network responses with rendered posts
 and scroll the page for more results. Mutual detection now checks the follower
 list in the browser and only marks unmatched accounts as non-mutual when that
 list is complete (`convex/scraping/instagram.ts`, `convex/scraping/network.ts`).
+
+### 2026-09-21 - b2469e0
+
+Refined the frontend around a high-contrast white-and-black palette with
+outlined controls, orange danger states, an elevated digest sheet, and orange
+enabled email-delivery toggles. Centered and clarified the landing-page welcome
+copy and primary action, and simplified the sign-up heading (`src/index.css`,
+`src/ui/LandingPage.tsx`, `src/auth/AuthForm.tsx`, `DESIGN.md`).
