@@ -22,10 +22,10 @@ export function LandingPage() {
               </p>
               <br></br>
               <p>
-              That's where Digest comes in. Digest cuts out all of the bloat and distills your feeds into a daily newsletter, containing only what you really want to see. Try it out now!
+              That's where Digest comes in. Digest cuts out all of the bloat and distills your feeds into a daily newsletter, containing only what you really want to see.
               </p>
             </p>
-            <AuthButton label="Start with Digest" className="primary-action hero-action w-[90%]" />
+            <AuthButton label="Try it out now!" className="primary-action hero-action w-[90%]" />
           </div>
 
           <div className="hero-example">

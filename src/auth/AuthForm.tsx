@@ -42,7 +42,7 @@ export function AuthForm() {
   return (
     <div className="auth-form">
       <div className="auth-heading">
-        <h2>{isSignUp ? 'Make room for a quieter feed.' : 'Welcome back.'}</h2>
+        <h2>{isSignUp ? 'Welcome.' : 'Welcome back.'}</h2>
         <p>{isSignUp ? 'Create an account to connect your services.' : 'Sign in to read your Digest.'}</p>
       </div>
 
